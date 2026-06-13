@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="logoGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Anvil body -->
+  <path d="M96 384 L160 256 L352 256 L416 384 Z" fill="url(#logoGrad)" opacity="0.9"/>
+
+  <!-- Anvil base -->
+  <rect x="128" y="384" width="256" height="32" rx="4" fill="url(#logoGrad2)"/>
+
+  <!-- Anvil horn (right side) -->
+  <path d="M352 256 L416 192 L448 192 L416 256 Z" fill="url(#logoGrad)" opacity="0.85"/>
+
+  <!-- Anvil horn (left side) -->
+  <path d="M160 256 L96 192 L64 192 L96 256 Z" fill="url(#logoGrad)" opacity="0.85"/>
+
+  <!-- Hammer head -->
+  <rect x="224" y="96" width="64" height="48" rx="6" fill="url(#logoGrad2)"/>
+
+  <!-- Hammer handle -->
+  <rect x="244" y="144" width="24" height="80" rx="3" fill="url(#logoGrad)" opacity="0.7"/>
+
+  <!-- Sparkle particles -->
+  <circle cx="200" cy="160" r="4" fill="#c4b5fd" opacity="0.8"/>
+  <circle cx="312" cy="144" r="3" fill="#c4b5fd" opacity="0.6"/>
+  <circle cx="176" cy="200" r="2.5" fill="#a78bfa" opacity="0.5"/>
+  <circle cx="336" cy="176" r="3.5" fill="#a78bfa" opacity="0.7"/>
+  <circle cx="256" cy="80" r="3" fill="#c4b5fd" opacity="0.9"/>
+  <circle cx="220" cy="120" r="2" fill="#a78bfa" opacity="0.4"/>
+  <circle cx="292" cy="112" r="2.5" fill="#a78bfa" opacity="0.5"/>
+
+  <!-- Stripe detail on anvil -->
+  <line x1="168" y1="320" x2="344" y2="320" stroke="#c4b5fd" stroke-width="2" opacity="0.3"/>
+  <line x1="184" y1="352" x2="328" y2="352" stroke="#c4b5fd" stroke-width="2" opacity="0.2"/>
+</svg>

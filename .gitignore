@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+node_modules/
+dist/
+.env
+*.egg-info/
+
+# Docs (local plans/specs only)
+docs/
