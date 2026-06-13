@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 440" fill="none">
+  <defs>
+    <linearGradient id="bgG" x1="0" y1="0" x2="1100" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="loadG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#2563eb"/></linearGradient>
+    <linearGradient id="analyzeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient>
+    <linearGradient id="ablitG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
+    <linearGradient id="mergeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
+    <linearGradient id="compG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient>
+    <linearGradient id="expG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#0891b2"/></linearGradient>
+    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="20%" stop-color="#8b5cf6"/>
+      <stop offset="40%" stop-color="#ef4444"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="80%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <filter id="glow2"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="shd"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity="0.35"/></filter>
+    <marker id="arr" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="440" rx="16" fill="url(#bgG)"/>
+  <rect width="1100" height="440" rx="16" fill="none" stroke="#2a2a4a" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="550" y="38" text-anchor="middle" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="1">PIPELINE EXECUTION FLOW</text>
+
+  <!-- ====== Main pipeline flow line ====== -->
+  <line x1="100" y1="155" x2="1020" y2="155" stroke="url(#lineGrad)" stroke-width="3" stroke-linecap="round" filter="url(#glow2)"/>
+
+  <!-- ====== NODE 1: LOAD MODEL ====== -->
+  <rect x="38" y="80" width="130" height="105" rx="14" fill="#1e1e36" stroke="#3b82f6" stroke-width="2" filter="url(#shd)"/>
+  <rect x="38" y="80" width="130" height="30" rx="14" fill="url(#loadG)" opacity="0.2"/>
+  <rect x="38" y="96" width="130" height="14" fill="#1e1e36"/>
+  <text x="103" y="100" text-anchor="middle" fill="#93c5fd" font-family="Inter, system-ui, sans-serif" font-size="18">📥</text>
+  <text x="103" y="130" text-anchor="middle" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700">Load Model</text>
+  <text x="103" y="148" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">HF / Local</text>
+  <text x="103" y="162" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Auto-quantize</text>
+  <text x="103" y="176" text-anchor="middle" fill="#3b82f6" font-family="monospace" font-size="8">NF4 · FP16 · BF16</text>
+
+  <!-- Arrow 1->2 -->
+  <polygon points="175,152 185,155 175,158" fill="#8b5cf6" filter="url(#glow2)"/>
+
+  <!-- ====== NODE 2: ANALYZE ====== -->
+  <rect x="194" y="80" width="130" height="105" rx="14" fill="#1e1e36" stroke="#8b5cf6" stroke-width="2" filter="url(#shd)"/>
+  <rect x="194" y="80" width="130" height="30" rx="14" fill="url(#analyzeG)" opacity="0.2"/>
+  <rect x="194" y="96" width="130" height="14" fill="#1e1e36"/>
+  <text x="259" y="100" text-anchor="middle" fill="#c4b5fd" font-family="Inter, system-ui, sans-serif" font-size="18">🔬</text>
+  <text x="259" y="130" text-anchor="middle" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700">Analyze</text>
+  <text x="259" y="148" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Refusal detection</text>
+  <text x="259" y="162" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Layer mapping</text>
+  <text x="259" y="176" text-anchor="middle" fill="#8b5cf6" font-family="monospace" font-size="8">Score · Heatmap</text>
+
+  <!-- Arrow 2->3 -->
+  <polygon points="331,152 341,155 331,158" fill="#ef4444" filter="url(#glow2)"/>
+
+  <!-- ====== NODE 3: ABLITERATE ====== -->
+  <rect x="350" y="80" width="130" height="105" rx="14" fill="#1e1e36" stroke="#ef4444" stroke-width="2" filter="url(#shd)"/>
+  <rect x="350" y="80" width="130" height="30" rx="14" fill="url(#ablitG)" opacity="0.2"/>
+  <rect x="350" y="96" width="130" height="14" fill="#1e1e36"/>
+  <text x="415" y="100" text-anchor="middle" fill="#fca5a5" font-family="Inter, system-ui, sans-serif" font-size="18">✂️</text>
+  <text x="415" y="130" text-anchor="middle" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700">Abliterate</text>
+  <text x="415" y="148" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Direction finding</text>
+  <text x="415" y="162" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Vector ablation</text>
+  <text x="415" y="176" text-anchor="middle" fill="#ef4444" font-family="monospace" font-size="8">Uncensor · Steer</text>
+
+  <!-- Arrow 3->4 -->
+  <polygon points="487,152 497,155 487,158" fill="#f59e0b" filter="url(#glow2)"/>
+
+  <!-- ====== NODE 4: MERGE ====== -->
+  <rect x="506" y="80" width="130" height="105" rx="14" fill="#1e1e36" stroke="#f59e0b" stroke-width="2" filter="url(#shd)"/>
+  <rect x="506" y="80" width="130" height="30" rx="14" fill="url(#mergeG)" opacity="0.2"/>
+  <rect x="506" y="96" width="130" height="14" fill="#1e1e36"/>
+  <text x="571" y="100" text-anchor="middle" fill="#fde68a" font-family="Inter, system-ui, sans-serif" font-size="18">🧩</text>
+  <text x="571" y="130" text-anchor="middle" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700">Merge / LoRA</text>
+  <text x="571" y="148" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Multi-model blend</text>
+  <text x="571" y="162" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Adapter fusion</text>
+  <text x="571" y="176" text-anchor="middle" fill="#f59e0b" font-family="monospace" font-size="8">SLERP · TIES · DARE</text>
+
+  <!-- Arrow 4->5 -->
+  <polygon points="643,152 653,155 643,158" fill="#10b981" filter="url(#glow2)"/>
+
+  <!-- ====== NODE 5: COMPRESS ====== -->
+  <rect x="662" y="80" width="130" height="105" rx="14" fill="#1e1e36" stroke="#10b981" stroke-width="2" filter="url(#shd)"/>
+  <rect x="662" y="80" width="130" height="30" rx="14" fill="url(#compG)" opacity="0.2"/>
+  <rect x="662" y="96" width="130" height="14" fill="#1e1e36"/>
+  <text x="727" y="100" text-anchor="middle" fill="#6ee7b7" font-family="Inter, system-ui, sans-serif" font-size="18">📦</text>
+  <text x="727" y="130" text-anchor="middle" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700">Compress</text>
+  <text x="727" y="148" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">GGUF quantization</text>
+  <text x="727" y="162" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Layer pruning</text>
+  <text x="727" y="176" text-anchor="middle" fill="#10b981" font-family="monospace" font-size="8">Q4_K_M · Q5 · Q8</text>
+
+  <!-- Arrow 5->6 -->
+  <polygon points="799,152 809,155 799,158" fill="#06b6d4" filter="url(#glow2)"/>
+
+  <!-- ====== NODE 6: EXPORT ====== -->
+  <rect x="818" y="80" width="130" height="105" rx="14" fill="#1e1e36" stroke="#06b6d4" stroke-width="2" filter="url(#shd)"/>
+  <rect x="818" y="80" width="130" height="30" rx="14" fill="url(#expG)" opacity="0.2"/>
+  <rect x="818" y="96" width="130" height="14" fill="#1e1e36"/>
+  <text x="883" y="100" text-anchor="middle" fill="#67e8f9" font-family="Inter, system-ui, sans-serif" font-size="18">💾</text>
+  <text x="883" y="130" text-anchor="middle" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700">Export</text>
+  <text x="883" y="148" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">safetensors</text>
+  <text x="883" y="162" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">GGUF output</text>
+  <text x="883" y="176" text-anchor="middle" fill="#06b6d4" font-family="monospace" font-size="8">Ready to deploy</text>
+
+  <!-- ====== OUTPUT INDICATOR ====== -->
+  <rect x="968" y="120" width="92" height="70" rx="35" fill="#1e1e36" stroke="#22c55e" stroke-width="2" stroke-dasharray="4 3" filter="url(#shd)"/>
+  <text x="1014" y="152" text-anchor="middle" fill="#4ade80" font-family="Inter, system-ui, sans-serif" font-size="16">✅</text>
+  <text x="1014" y="172" text-anchor="middle" fill="#86efac" font-family="Inter, system-ui, sans-serif" font-size="9" font-weight="600">Done</text>
+
+  <!-- ====== CHAT PANEL TESTING (below nodes) ====== -->
+  <!-- Vertical connectors from nodes to chat -->
+  <line x1="259" y1="185" x2="259" y2="270" stroke="#475569" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <line x1="415" y1="185" x2="415" y2="270" stroke="#475569" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <line x1="571" y1="185" x2="571" y2="270" stroke="#475569" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <line x1="727" y1="185" x2="727" y2="270" stroke="#475569" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+  <!-- Chat test boxes -->
+  <rect x="210" y="270" width="100" height="48" rx="10" fill="#1e1e36" stroke="#475569" stroke-width="1"/>
+  <text x="260" y="291" text-anchor="middle" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="10">💬 Test Chat</text>
+  <text x="260" y="308" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="8">Compare output</text>
+
+  <rect x="366" y="270" width="100" height="48" rx="10" fill="#1e1e36" stroke="#475569" stroke-width="1"/>
+  <text x="416" y="291" text-anchor="middle" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="10">💬 Test Chat</text>
+  <text x="416" y="308" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="8">Verify ablation</text>
+
+  <rect x="522" y="270" width="100" height="48" rx="10" fill="#1e1e36" stroke="#475569" stroke-width="1"/>
+  <text x="572" y="291" text-anchor="middle" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="10">💬 Test Chat</text>
+  <text x="572" y="308" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="8">Test merge</text>
+
+  <rect x="678" y="270" width="100" height="48" rx="10" fill="#1e1e36" stroke="#475569" stroke-width="1"/>
+  <text x="728" y="291" text-anchor="middle" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="10">💬 Test Chat</text>
+  <text x="728" y="308" text-anchor="middle" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="8">Quality check</text>
+
+  <!-- ====== BOTTOM INFO BAR ====== -->
+  <rect x="40" y="355" width="1020" height="65" rx="12" fill="#1e1e36" stroke="#2a2a4a" stroke-width="1"/>
+
+  <!-- DAG Executor info -->
+  <circle cx="80" cy="387" r="18" fill="#252547" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="80" y="392" text-anchor="middle" fill="#c4b5fd" font-family="Inter, system-ui, sans-serif" font-size="14">⚡</text>
+  <text x="115" y="380" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600">DAG Executor</text>
+  <text x="115" y="396" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Validates full pipeline before running</text>
+
+  <!-- Data Flow info -->
+  <circle cx="370" cy="387" r="18" fill="#252547" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="370" y="392" text-anchor="middle" fill="#fde68a" font-family="Inter, system-ui, sans-serif" font-size="14">🔗</text>
+  <text x="405" y="380" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600">Typed Data Flow</text>
+  <text x="405" y="396" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Model ref + metadata between nodes</text>
+
+  <!-- Auto Fallback info -->
+  <circle cx="650" cy="387" r="18" fill="#252547" stroke="#10b981" stroke-width="1.5"/>
+  <text x="650" y="392" text-anchor="middle" fill="#6ee7b7" font-family="Inter, system-ui, sans-serif" font-size="14">🛡</text>
+  <text x="685" y="380" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600">Auto Fallback</text>
+  <text x="685" y="396" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Graceful recovery if a node fails</text>
+
+  <!-- Skip/Branch info -->
+  <circle cx="915" cy="387" r="18" fill="#252547" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="915" y="392" text-anchor="middle" fill="#67e8f9" font-family="Inter, system-ui, sans-serif" font-size="14">🔀</text>
+  <text x="950" y="380" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600">Flexible</text>
+  <text x="950" y="396" fill="#64748b" font-family="Inter, system-ui, sans-serif" font-size="9">Skip nodes, branch pipelines</text>
+</svg>

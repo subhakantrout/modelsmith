@@ -132,34 +132,17 @@ Open **http://localhost:5173** 🎉
 
 ## 🏗 Architecture
 
-```
-┌──────────────────────────────────┐       HTTP / WebSocket        ┌─────────────────────────────┐
-│       React Frontend (Vite)      │ ◄───────────────────────────► │     Python FastAPI          │
-│                                  │   localhost:5173              │     localhost:8765          │
-│  ┌──────────┐  ┌──────────────┐  │                               │                             │
-│  │ Pipeline │  │  Dashboard   │  │                               │  ┌───────────────────────┐  │
-│  │ Canvas   │  │  · Radar     │  │                               │  │  Core Engine          │  │
-│  │  · Nodes │  │  · Heatmap   │  │                               │  │  · Model Manager      │  │
-│  │  · Edges │  │  · Registry  │  │                               │  │  · Abliterator        │  │
-│  │  · Run   │  │  · Compare   │  │                               │  │  · Merger/LoRA        │  │
-│  └──────────┘  └──────────────┘  │                               │  │  · Compressor         │  │
-│  ┌──────────┐  ┌──────────────┐  │                               │  │  · Inference          │  │
-│  │ Chat     │  │  Config      │  │                               │  │  · Advisor            │  │
-│  │ Panel    │  │  Panel       │  │                               │  └───────────────────────┘  │
-│  └──────────┘  └──────────────┘  │                               └─────────────────────────────┘
-└──────────────────────────────────┘
-```
+<div align="center">
+<img src="frontend/public/arch-diagram.svg" alt="ModelSmith Architecture" width="800">
+</div>
 
 ### Pipeline Execution Model
 
-```
-[Load Model] ──→ [Analyze] ──→ [Abliterate] ──→ [Merge] ──→ [Compress] ──→ [Export]
-                    │               │               │              │
-                    ▼               ▼               ▼              ▼
-              [Test Chat]    [Test Chat]     [Test Chat]     [Test Chat]
-```
+<div align="center">
+<img src="frontend/public/pipeline-flow.svg" alt="Pipeline Execution Flow" width="800">
+</div>
 
-Each node is a typed Python function. Connections represent data flow (model reference + metadata). The DAG executor validates the entire pipeline before running, with automatic fallback if a node fails.
+> Each node is a typed Python function. Connections represent data flow (model reference + metadata). The DAG executor validates the entire pipeline before running, with automatic fallback if a node fails. You can **test at any stage** via the built-in Chat panel.
 
 ---
 

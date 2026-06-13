@@ -1,121 +1,156 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" fill="none">
   <defs>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1e1b4b"/>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1100" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
     </linearGradient>
     <linearGradient id="feGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#4f46e5"/>
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
     </linearGradient>
     <linearGradient id="beGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#a855f7"/>
-      <stop offset="100%" stop-color="#9333ea"/>
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
     </linearGradient>
-    <linearGradient id="connGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#a855f7"/>
+    <linearGradient id="coreGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
     </linearGradient>
-    <linearGradient id="nodeGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#312e81"/>
-      <stop offset="100%" stop-color="#1e1b4b"/>
+    <linearGradient id="arrowGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#10b981"/>
     </linearGradient>
     <filter id="glow">
       <feGaussianBlur stdDeviation="3" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
   </defs>
 
   <!-- Background -->
-  <rect width="900" height="520" rx="12" fill="url(#bgGrad)"/>
+  <rect width="1100" height="520" rx="16" fill="url(#bgGrad)"/>
+  <rect width="1100" height="520" rx="16" fill="none" stroke="#2a2a4a" stroke-width="1"/>
 
   <!-- Title -->
-  <text x="450" y="36" text-anchor="middle" font-family="system-ui" font-weight="700" font-size="18" fill="#e2e8f0" letter-spacing="1">ARCHITECTURE</text>
+  <text x="550" y="40" text-anchor="middle" fill="#e2e8f0" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="1">SYSTEM ARCHITECTURE</text>
 
-  <!-- Connection line between frontend and backend -->
-  <line x1="370" y1="180" x2="530" y2="180" stroke="url(#connGrad)" stroke-width="2.5" stroke-dasharray="6,4" filter="url(#glow)"/>
-  <text x="450" y="165" text-anchor="middle" font-family="system-ui" font-weight="600" font-size="11" fill="#a78bfa">HTTP / WebSocket</text>
-  <text x="450" y="195" text-anchor="middle" font-family="system-ui" font-weight="400" font-size="9" fill="#64748b">localhost:5173 ←→ localhost:8765</text>
+  <!-- ==================== FRONTEND BOX ==================== -->
+  <rect x="40" y="65" width="440" height="400" rx="14" fill="#1e1e36" stroke="#3b82f6" stroke-width="1.5" filter="url(#shadow)"/>
+  <!-- Header bar -->
+  <rect x="40" y="65" width="440" height="44" rx="14" fill="url(#feGrad)" opacity="0.15"/>
+  <rect x="40" y="95" width="440" height="14" fill="#1e1e36"/>
+  <circle cx="62" cy="87" r="5" fill="#3b82f6" opacity="0.8"/>
+  <text x="80" y="92" fill="#93c5fd" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="700">⚛ REACT FRONTEND</text>
+  <text x="390" y="92" fill="#64748b" font-family="monospace" font-size="11">:5173</text>
 
+  <!-- Pipeline Canvas card -->
+  <rect x="60" y="125" width="190" height="130" rx="10" fill="#252547" stroke="#4f46e5" stroke-width="1" opacity="0.9"/>
+  <text x="155" y="150" text-anchor="middle" fill="#a5b4fc" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700">🎨 Pipeline Canvas</text>
+  <text x="80" y="175" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Drag-and-drop nodes</text>
+  <text x="80" y="195" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Edge connections</text>
+  <text x="80" y="215" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Pipeline runner</text>
+  <text x="80" y="235" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Real-time status</text>
+
+  <!-- Dashboard card -->
+  <rect x="270" y="125" width="190" height="130" rx="10" fill="#252547" stroke="#8b5cf6" stroke-width="1" opacity="0.9"/>
+  <text x="365" y="150" text-anchor="middle" fill="#c4b5fd" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700">📊 Dashboard</text>
+  <text x="290" y="175" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Capability radar</text>
+  <text x="290" y="195" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Layer heatmap</text>
+  <text x="290" y="215" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Model registry</text>
+  <text x="290" y="235" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Model comparison</text>
+
+  <!-- Chat Panel card -->
+  <rect x="60" y="275" width="190" height="105" rx="10" fill="#252547" stroke="#06b6d4" stroke-width="1" opacity="0.9"/>
+  <text x="155" y="300" text-anchor="middle" fill="#67e8f9" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700">💬 Chat Panel</text>
+  <text x="80" y="325" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Side-by-side testing</text>
+  <text x="80" y="345" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Streaming inference</text>
+  <text x="80" y="365" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Before / after diff</text>
+
+  <!-- State Management card -->
+  <rect x="270" y="275" width="190" height="105" rx="10" fill="#252547" stroke="#f472b6" stroke-width="1" opacity="0.9"/>
+  <text x="365" y="300" text-anchor="middle" fill="#f9a8d4" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700">🗄 State (Zustand)</text>
+  <text x="290" y="325" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• pipelineStore</text>
+  <text x="290" y="345" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• modelStore</text>
+  <text x="290" y="365" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• systemStore</text>
+
+  <!-- Tech badges -->
+  <rect x="60" y="400" width="55" height="22" rx="11" fill="#2a2a4a"/>
+  <text x="87" y="415" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9">React</text>
+  <rect x="122" y="400" width="40" height="22" rx="11" fill="#2a2a4a"/>
+  <text x="142" y="415" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9">TS</text>
+  <rect x="168" y="400" width="45" height="22" rx="11" fill="#2a2a4a"/>
+  <text x="191" y="415" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9">Vite</text>
+  <rect x="220" y="400" width="65" height="22" rx="11" fill="#2a2a4a"/>
+  <text x="252" y="415" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9">XYFlow</text>
+
+  <!-- ==================== CONNECTION ARROWS ==================== -->
+  <!-- Arrow line -->
+  <line x1="490" y1="200" x2="610" y2="200" stroke="url(#arrowGrad)" stroke-width="2.5" stroke-dasharray="8 4" filter="url(#glow)"/>
+  <line x1="490" y1="320" x2="610" y2="320" stroke="url(#arrowGrad)" stroke-width="2.5" stroke-dasharray="8 4" filter="url(#glow)"/>
   <!-- Arrow heads -->
-  <polygon points="530,175 540,180 530,185" fill="#a78bfa"/>
-  <polygon points="370,175 360,180 370,185" fill="#6366f1"/>
+  <polygon points="607,194 617,200 607,206" fill="#8b5cf6"/>
+  <polygon points="613,314 603,320 613,326" fill="#8b5cf6"/>
+  <!-- Label -->
+  <rect x="510" y="240" width="80" height="38" rx="8" fill="#1e1e36" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="550" y="255" text-anchor="middle" fill="#c4b5fd" font-family="monospace" font-size="9">HTTP</text>
+  <text x="550" y="269" text-anchor="middle" fill="#c4b5fd" font-family="monospace" font-size="9">REST API</text>
 
-  <!-- Frontend section -->
-  <rect x="30" y="60" width="340" height="300" rx="10" fill="#1e293b" stroke="#6366f1" stroke-width="1.5" opacity="0.8"/>
-  <rect x="30" y="60" width="340" height="32" rx="10" fill="url(#feGrad)"/>
-  <rect x="30" y="82" width="340" height="10" fill="url(#feGrad)"/>
-  <text x="200" y="81" text-anchor="middle" font-family="system-ui" font-weight="700" font-size="13" fill="#e2e8f0">React Frontend (Vite)</text>
+  <!-- ==================== BACKEND BOX ==================== -->
+  <rect x="620" y="65" width="440" height="400" rx="14" fill="#1e1e36" stroke="#10b981" stroke-width="1.5" filter="url(#shadow)"/>
+  <!-- Header bar -->
+  <rect x="620" y="65" width="440" height="44" rx="14" fill="url(#beGrad)" opacity="0.15"/>
+  <rect x="620" y="95" width="440" height="14" fill="#1e1e36"/>
+  <circle cx="642" cy="87" r="5" fill="#10b981" opacity="0.8"/>
+  <text x="660" y="92" fill="#6ee7b7" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="700">🐍 PYTHON BACKEND</text>
+  <text x="970" y="92" fill="#64748b" font-family="monospace" font-size="11">:8765</text>
 
-  <!-- Frontend components -->
-  <rect x="50" y="110" width="145" height="65" rx="8" fill="url(#nodeGrad)" stroke="#6366f1" stroke-width="1" opacity="0.9"/>
-  <text x="122" y="135" text-anchor="middle" font-family="system-ui" font-weight="600" font-size="11" fill="#c4b5fd">Pipeline Canvas</text>
-  <text x="122" y="150" text-anchor="middle" font-family="system-ui" font-weight="400" font-size="9" fill="#64748b">Nodes · Edges · Run</text>
-  <circle cx="62" cy="120" r="4" fill="#6366f1"/>
+  <!-- API Layer card -->
+  <rect x="640" y="125" width="190" height="130" rx="10" fill="#1e3a2f" stroke="#10b981" stroke-width="1" opacity="0.9"/>
+  <text x="735" y="150" text-anchor="middle" fill="#6ee7b7" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700">🌐 API Layer (FastAPI)</text>
+  <text x="660" y="175" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• /api/models/*</text>
+  <text x="660" y="195" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• /api/abliterate/*</text>
+  <text x="660" y="215" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• /api/merge, /api/lora</text>
+  <text x="660" y="235" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• /api/compress, /export</text>
 
-  <rect x="215" y="110" width="135" height="65" rx="8" fill="url(#nodeGrad)" stroke="#6366f1" stroke-width="1" opacity="0.9"/>
-  <text x="282" y="135" text-anchor="middle" font-family="system-ui" font-weight="600" font-size="11" fill="#c4b5fd">Dashboard</text>
-  <text x="282" y="150" text-anchor="middle" font-family="system-ui" font-weight="400" font-size="9" fill="#64748b">Radar · Heatmap · Registry</text>
-  <circle cx="227" cy="120" r="4" fill="#6366f1"/>
+  <!-- Core Engine card -->
+  <rect x="850" y="125" width="190" height="130" rx="10" fill="#2a2515" stroke="#f59e0b" stroke-width="1" opacity="0.9"/>
+  <text x="945" y="150" text-anchor="middle" fill="#fcd34d" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700">⚙️ Core Engine</text>
+  <text x="870" y="175" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Model Manager</text>
+  <text x="870" y="195" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Abliterator</text>
+  <text x="870" y="215" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Merger / LoRA</text>
+  <text x="870" y="235" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Compressor</text>
 
-  <rect x="50" y="195" width="145" height="65" rx="8" fill="url(#nodeGrad)" stroke="#6366f1" stroke-width="1" opacity="0.9"/>
-  <text x="122" y="220" text-anchor="middle" font-family="system-ui" font-weight="600" font-size="11" fill="#c4b5fd">Chat Panel</text>
-  <text x="122" y="235" text-anchor="middle" font-family="system-ui" font-weight="400" font-size="9" fill="#64748b">Side-by-side comparison</text>
-  <circle cx="62" cy="205" r="4" fill="#6366f1"/>
+  <!-- System / Hardware card -->
+  <rect x="640" y="275" width="190" height="105" rx="10" fill="#1e3a2f" stroke="#14b8a6" stroke-width="1" opacity="0.9"/>
+  <text x="735" y="300" text-anchor="middle" fill="#5eead4" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700">💻 System Layer</text>
+  <text x="660" y="325" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• GPU/CPU detection</text>
+  <text x="660" y="345" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Tier classification</text>
+  <text x="660" y="365" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Pre-flight checks</text>
 
-  <rect x="215" y="195" width="135" height="65" rx="8" fill="url(#nodeGrad)" stroke="#6366f1" stroke-width="1" opacity="0.9"/>
-  <text x="282" y="220" text-anchor="middle" font-family="system-ui" font-weight="600" font-size="11" fill="#c4b5fd">Config Panel</text>
-  <text x="282" y="235" text-anchor="middle" font-family="system-ui" font-weight="400" font-size="9" fill="#64748b">Settings · Preferences</text>
-  <circle cx="227" cy="205" r="4" fill="#6366f1"/>
+  <!-- Inference / Advisor card -->
+  <rect x="850" y="275" width="190" height="105" rx="10" fill="#2a2515" stroke="#eab308" stroke-width="1" opacity="0.9"/>
+  <text x="945" y="300" text-anchor="middle" fill="#fde047" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700">🧠 Intelligence</text>
+  <text x="870" y="325" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Inference engine</text>
+  <text x="870" y="345" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Pipeline advisor</text>
+  <text x="870" y="365" fill="#94a3b8" font-family="Inter, system-ui, sans-serif" font-size="11">• Config profiles</text>
 
-  <!-- Frontend state layer -->
-  <rect x="50" y="280" width="300" height="55" rx="8" fill="#334155" stroke="#475569" stroke-width="1" opacity="0.7"/>
-  <text x="200" y="300" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="10" fill="#94a3b8">State Layer (Zustand)</text>
-  <text x="200" y="318" text-anchor="middle" font-family="system-ui" font-weight="400" font-size="9" fill="#64748b">Pipeline Store · Model Store · UI Store</text>
+  <!-- Tech badges -->
+  <rect x="640" y="400" width="65" height="22" rx="11" fill="#1a2e25"/>
+  <text x="672" y="415" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9">FastAPI</text>
+  <rect x="712" y="400" width="65" height="22" rx="11" fill="#1a2e25"/>
+  <text x="744" y="415" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9">PyTorch</text>
+  <rect x="784" y="400" width="55" height="22" rx="11" fill="#1a2e25"/>
+  <text x="811" y="415" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9">CUDA</text>
+  <rect x="846" y="400" width="55" height="22" rx="11" fill="#1a2e25"/>
+  <text x="873" y="415" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9">PEFT</text>
 
-  <!-- Backend section -->
-  <rect x="530" y="60" width="340" height="300" rx="10" fill="#1e293b" stroke="#a855f7" stroke-width="1.5" opacity="0.8"/>
-  <rect x="530" y="60" width="340" height="32" rx="10" fill="url(#beGrad)"/>
-  <rect x="530" y="82" width="340" height="10" fill="url(#beGrad)"/>
-  <text x="700" y="81" text-anchor="middle" font-family="system-ui" font-weight="700" font-size="13" fill="#e2e8f0">Python FastAPI Backend</text>
+  <!-- Bottom connector lines: API -> Core -->
+  <line x1="830" y1="190" x2="850" y2="190" stroke="#475569" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="830" y1="327" x2="850" y2="327" stroke="#475569" stroke-width="1" stroke-dasharray="4 3"/>
 
-  <!-- Backend Core Engine -->
-  <rect x="550" y="110" width="300" height="175" rx="8" fill="#2e1065" stroke="#a855f7" stroke-width="1" opacity="0.6"/>
-  <text x="700" y="132" text-anchor="middle" font-family="system-ui" font-weight="600" font-size="11" fill="#d8b4fe">Core Engine</text>
-
-  <!-- Engine components -->
-  <rect x="565" y="145" width="90" height="28" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="0.5"/>
-  <text x="610" y="163" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="9" fill="#c4b5fd">Model Manager</text>
-
-  <rect x="670" y="145" width="90" height="28" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="0.5"/>
-  <text x="715" y="163" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="9" fill="#c4b5fd">Abliterator</text>
-
-  <rect x="775" y="145" width="60" height="28" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="0.5"/>
-  <text x="805" y="163" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="9" fill="#c4b5fd">Merger</text>
-
-  <rect x="565" y="185" width="90" height="28" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="0.5"/>
-  <text x="610" y="203" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="9" fill="#c4b5fd">LoRA Engine</text>
-
-  <rect x="670" y="185" width="90" height="28" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="0.5"/>
-  <text x="715" y="203" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="9" fill="#c4b5fd">Compressor</text>
-
-  <rect x="775" y="185" width="60" height="28" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="0.5"/>
-  <text x="805" y="203" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="9" fill="#c4b5fd">Inference</text>
-
-  <rect x="565" y="225" width="130" height="28" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="0.5"/>
-  <text x="630" y="243" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="9" fill="#c4b5fd">Pipeline Advisor</text>
-
-  <rect x="710" y="225" width="125" height="28" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="0.5"/>
-  <text x="772" y="243" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="9" fill="#c4b5fd">Export Engine</text>
-
-  <!-- API layer below engine -->
-  <rect x="550" y="300" width="300" height="35" rx="8" fill="#334155" stroke="#475569" stroke-width="1" opacity="0.7"/>
-  <text x="700" y="322" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="10" fill="#94a3b8">40+ REST API Endpoints · Pydantic Validation</text>
-
-  <!-- Bottom legend -->
-
-  <!-- Footer description -->
-  <rect x="30" y="380" width="840" height="55" rx="8" fill="#1e293b" opacity="0.6"/>
-  <text x="450" y="402" text-anchor="middle" font-family="system-ui" font-weight="500" font-size="11" fill="#94a3b8">Users interact with the visual React frontend, which communicates with the Python backend over HTTP/WebSocket.</text>
-  <text x="450" y="420" text-anchor="middle" font-family="system-ui" font-weight="400" font-size="10" fill="#64748b">The Core Engine runs all ML operations — loading, analyzing, ablating, merging, compressing — and streams results back to the UI.</text>
+  <!-- Footer -->
+  <text x="550" y="498" text-anchor="middle" fill="#475569" font-family="Inter, system-ui, sans-serif" font-size="11">All communication via RESTful HTTP on localhost  •  No external services required</text>
 </svg>
