@@ -14,7 +14,7 @@
 
 **A visual node-based pipeline studio for local AI models — uncensor, merge, enhance, and compress without writing code.**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Why ModelSmith](#-why-modelsmith) • [Use Cases](#-use-cases) • [Architecture](#-architecture) • [Roadmap](#-roadmap)
+[Why ModelSmith](#-why-modelsmith) • [Features](#-features) • [Use Cases](#-use-cases) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [API](#-api-overview) • [Roadmap](#-roadmap)
 
 </div>
 
@@ -156,7 +156,6 @@ Open **http://localhost:5173** 🎉
 | **Pipeline nodes** | 7 types (Load, Analyze, Abliterate, Merge, LoRA, Compress, Export) |
 | **Frontend components** | 25+ React components |
 | **State stores** | 5 Zustand stores |
-| **Git commits** | 40+ |
 
 ---
 
@@ -260,7 +259,6 @@ python -m pytest backend/tests/ -v
 | `POST` | `/api/export/run` | 💾 Export model |
 | `GET` | `/api/advisor/recommend` | 🧠 Get pipeline recommendation |
 
-[Full API Reference →](#api-overview)
 
 ---
 
@@ -278,9 +276,9 @@ python -m pytest backend/tests/ -v
 
 ## 📄 License
 
-MIT License — Copyright (c) 2026 **Subhakanta Rout**
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions.
+Copyright © 2026 **Subhakanta Rout**
 
 ---
 
