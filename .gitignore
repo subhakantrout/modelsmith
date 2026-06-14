@@ -45,8 +45,5 @@ docs/
 # OS
 *.log
 
-# Downloaded models (weights/configs)
-models/**/*.safetensors
-models/**/*.bin
-models/**/*.pt
-models/**/*.pth
+# Downloaded models (user/system-specific)
+models/
