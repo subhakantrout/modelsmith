@@ -36,3 +36,8 @@ htmlcov/
 
 # Project specific
 *.recipe.json
+
+# Internal working docs (AI agent artifacts)
+.superpowers/
+docs/superpowers/
+

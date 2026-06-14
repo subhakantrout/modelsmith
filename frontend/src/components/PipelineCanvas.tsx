@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import {
   ReactFlow,
   Background,
@@ -22,7 +22,6 @@ import {
   CompressNode,
 } from "./nodes";
 import type { PipelineNodeProps } from "./nodes/types";
-import { ChatPanel } from "./ChatPanel";
 import { runPipeline, dryRunPipeline } from "../stores/pipelineRunner";
 import { api } from "../lib/api";
 
@@ -56,16 +55,10 @@ export function PipelineCanvas() {
   const isRunning = usePipelineStore((s) => s.isRunning);
   const selectedNodeId = usePipelineStore((s) => s.selectedNodeId);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [showProjects, setShowProjects] = useState(false);
-  const [dryRunResult, setDryRunResult] = useState<any>(null);
   const selectNode = usePipelineStore((s) => s.selectNode);
   const setPipelineName = usePipelineStore((s) => s.setPipelineName);
   const pipelineName = usePipelineStore((s) => s.pipelineName);
   const saveCurrentProject = usePipelineStore((s) => s.saveCurrentProject);
-  const listProjects = usePipelineStore((s) => s.listProjects);
-  const projects = usePipelineStore((s) => s.projects);
-  const loadProjectById = usePipelineStore((s) => s.loadProjectById);
   const addToast = useToastStore((s) => s.addToast);
 
   const onConnect = useCallback(
@@ -99,22 +92,6 @@ export function PipelineCanvas() {
     }
   }, [saveCurrentProject]);
 
-  const handleListProjects = useCallback(async () => {
-    try {
-      await listProjects();
-    } catch (err) {
-      console.error("List projects failed:", err);
-    }
-  }, [listProjects]);
-
-  const handleLoadProject = useCallback(async (id: string) => {
-    try {
-      await loadProjectById(id);
-    } catch (err) {
-      console.error("Load failed:", err);
-    }
-  }, [loadProjectById]);
-
   const handleRun = useCallback(async () => {
     if (nodes.length === 0) return;
     try {
@@ -127,8 +104,7 @@ export function PipelineCanvas() {
   const handleDryRun = useCallback(async () => {
     if (nodes.length === 0) return;
     try {
-      const result = await dryRunPipeline();
-      setDryRunResult(result);
+      await dryRunPipeline();
     } catch (err) {
       console.error("Dry run failed:", err);
     }
@@ -174,13 +150,6 @@ export function PipelineCanvas() {
     { key: "Backspace", handler: removeSelectedNode },
   ], !showImportModal);
 
-  const selectedNode = useMemo(
-    () => nodes.find((n) => n.id === selectedNodeId) || null,
-    [nodes, selectedNodeId]
-  );
-
-  const NodeComponent = selectedNode ? typeToComponent[selectedNode.data.type] : null;
-
   return (
     <div className="flex h-full">
       <div className="flex-1 flex flex-col min-w-0">
@@ -202,8 +171,6 @@ export function PipelineCanvas() {
               className="hidden sm:block px-2 py-1 text-xs bg-gray-700 border border-gray-500 rounded text-gray-100 w-28 lg:w-40"
             />
             <button onClick={handleSave} className="px-2 py-1 text-xs font-medium bg-emerald-700 text-gray-200 rounded hover:bg-emerald-600">Save</button>
-            <button onClick={() => { handleListProjects(); setShowProjects(!showProjects); }} className="px-2 py-1 text-xs font-medium bg-gray-700 text-gray-300 rounded hover:bg-gray-600">{showProjects ? "Hide" : "Load"}</button>
-            <button onClick={() => setChatOpen(!chatOpen)} className={`px-2 py-1 text-xs font-medium rounded ${chatOpen ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}>Chat</button>
             <button onClick={handleDryRun} disabled={isRunning || nodes.length === 0} className="px-2 py-1 text-xs font-medium bg-amber-600 text-gray-100 rounded hover:bg-amber-500 disabled:opacity-50">Dry Run</button>
             <button onClick={handleRun} disabled={isRunning || nodes.length === 0} className="px-2 sm:px-4 py-1 text-xs font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50">{isRunning ? "Running..." : "Run"}</button>
             <button onClick={handleExportRecipe} disabled={nodes.length === 0} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600 disabled:opacity-50">Export Recipe</button>
@@ -234,87 +201,6 @@ export function PipelineCanvas() {
           </ReactFlow>
         </div>
       </div>
-
-      {dryRunResult && (
-        <div className="w-72 sm:w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto shrink-0">
-          <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-100">Dry Run Results</span>
-            <button onClick={() => setDryRunResult(null)} className="text-gray-400 hover:text-gray-200 text-lg leading-none">×</button>
-          </div>
-          <div className="p-3 space-y-2 text-xs">
-            <div className={`flex items-center gap-2 ${dryRunResult.valid ? "text-green-400" : "text-red-400"}`}>
-              <span className="font-medium">{dryRunResult.valid ? "Valid" : "Invalid"}</span>
-            </div>
-            {dryRunResult.errors?.length > 0 && (
-              <div><span className="text-red-400 font-medium">Errors:</span>
-                {dryRunResult.errors.map((e: string, i: number) => <p key={i} className="text-red-300 mt-1">• {e}</p>)}
-              </div>
-            )}
-            {dryRunResult.warnings?.length > 0 && (
-              <div><span className="text-yellow-400 font-medium">Warnings:</span>
-                {dryRunResult.warnings.map((w: string, i: number) => <p key={i} className="text-yellow-300 mt-1">• {w}</p>)}
-              </div>
-            )}
-            <div className="text-gray-400">Steps validated: {dryRunResult.steps_validated}</div>
-            <button onClick={handleRun} className="w-full px-3 py-1 text-xs font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 mt-2">
-              Run Anyway
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showProjects && !chatOpen && !dryRunResult && (
-        <div className="w-72 sm:w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto shrink-0">
-          <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-100">Projects</span>
-            <button onClick={() => setShowProjects(false)} className="text-gray-400 hover:text-gray-200 text-lg leading-none">×</button>
-          </div>
-          <div className="p-3 space-y-2 text-xs">
-            {projects.length === 0 && <p className="text-gray-500 italic">No saved projects</p>}
-            {projects.map((p) => (
-              <div key={p.id} className="bg-gray-800 border border-gray-700 rounded p-2 flex items-center justify-between">
-                <div>
-                  <div className="text-gray-200 font-medium">{p.name}</div>
-                  <div className="text-gray-500">{p.node_count} nodes • {p.updated?.slice(0, 10)}</div>
-                </div>
-                <button onClick={() => handleLoadProject(p.id)} className="px-2 py-1 text-xs bg-blue-600 text-gray-100 rounded hover:bg-blue-500">Load</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {chatOpen ? (
-        <ChatPanel onClose={() => setChatOpen(false)} />
-      ) : !dryRunResult && !showProjects && selectedNode && NodeComponent ? (
-        <div className="w-72 sm:w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto shrink-0">
-          <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-100">
-              {selectedNode.data.label}
-            </span>
-            <button
-              onClick={() => selectNode(null)}
-              className="text-gray-400 hover:text-gray-200 text-lg leading-none"
-            >
-              ×
-            </button>
-          </div>
-          <div className="p-3">
-            <NodeComponent {...({
-              id: selectedNode.id,
-              data: selectedNode.data,
-              type: "pipelineNode",
-              selected: false,
-              dragging: false,
-              zIndex: 0,
-              positionAbsoluteX: 0,
-              positionAbsoluteY: 0,
-              sourcePosition: undefined,
-              targetPosition: undefined,
-            } as PipelineNodeProps)} />
-          </div>
-        </div>
-      ) : null}
 
       {showImportModal && (
         <ImportRecipeModal

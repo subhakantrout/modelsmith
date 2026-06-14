@@ -223,15 +223,51 @@ class DownloadManager:
         self._schedule_next()
 
 
+def _chunked_download(url: str, output_path: str, headers: dict, task: dict, file_size: int) -> bool:
+    import requests
+    resume_bytes = 0
+    if os.path.exists(output_path):
+        resume_bytes = os.path.getsize(output_path)
+    range_header = {"Range": f"bytes={resume_bytes}-"} if resume_bytes > 0 else {}
+    all_headers = {**headers, **range_header}
+    resp = requests.get(url, headers=all_headers, stream=True, timeout=30)
+    if resp.status_code == 416:
+        return True
+    resp.raise_for_status()
+    mode = "ab" if resume_bytes > 0 else "wb"
+    with open(output_path, mode) as f:
+        for chunk in resp.iter_content(chunk_size=1024 * 1024):
+            if task["_cancel"].is_set():
+                return False
+            while task["_pause"].is_set():
+                if task["_cancel"].is_set():
+                    return False
+                task["_pause"].wait(0.3)
+            if chunk:
+                f.write(chunk)
+                task["downloaded_bytes"] += len(chunk)
+                elapsed = time.time() - task["started_at"]
+                if elapsed > 1:
+                    task["speed_bytes_per_sec"] = task["downloaded_bytes"] / elapsed
+                if file_size > 0:
+                    task["progress"] = min(task["downloaded_bytes"] / file_size, 1.0)
+    return True
+
+
 def _download_worker(mgr: DownloadManager, download_id: str):
     task = mgr._tasks.get(download_id)
     if not task:
         return
     try:
-        from huggingface_hub import HfApi, hf_hub_download
+        import requests
+        from huggingface_hub import HfApi
+        token = task.get("token") or None
+        headers = {}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
 
         api = HfApi()
-        info = api.model_info(task["model_id"], token=task["token"], files_metadata=True)
+        info = api.model_info(task["model_id"], token=token, files_metadata=True)
         siblings = [s for s in info.siblings if not s.rfilename.endswith("/")]
         file_sizes: dict[str, int] = {s.rfilename: s.size or 0 for s in siblings}
         repo_files = list(file_sizes.keys())
@@ -241,6 +277,8 @@ def _download_worker(mgr: DownloadManager, download_id: str):
         task["total_bytes"] = total_bytes
         os.makedirs(task["output_dir"], exist_ok=True)
         task["status"] = "downloading"
+
+        base_url = f"https://huggingface.co/{task['model_id']}/resolve/main"
 
         for i, file_path in enumerate(repo_files):
             if task["_cancel"].is_set():
@@ -258,28 +296,30 @@ def _download_worker(mgr: DownloadManager, download_id: str):
                 task["_pause"].wait(0.3)
 
             task["current_file"] = file_path
-            task["files_done"] = i + 1
+            task["files_done"] = i
 
-            elapsed = time.time() - task["started_at"]
-            if total_bytes > 0 and task["downloaded_bytes"] > 0 and elapsed > 0:
-                task["speed_bytes_per_sec"] = task["downloaded_bytes"] / elapsed
+            file_url = f"{base_url}/{file_path}"
+            local_path = os.path.join(task["output_dir"], file_path)
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            file_size = file_sizes.get(file_path, 0)
 
-            hf_hub_download(
-                repo_id=task["model_id"],
-                filename=file_path,
-                local_dir=task["output_dir"],
-                token=task["token"],
-            )
+            if os.path.exists(local_path) and os.path.getsize(local_path) == file_size:
+                task["downloaded_bytes"] += file_size
+                task["files_done"] = i + 1
+                if total_bytes > 0:
+                    task["progress"] = min(task["downloaded_bytes"] / total_bytes, 1.0)
+                continue
 
-            if task["_cancel"].is_set():
+            ok = _chunked_download(file_url, local_path, headers, task, total_bytes)
+            if not ok:
                 task["status"] = "cancelled"
                 task["completed_at"] = time.time()
                 mgr._on_task_done(download_id)
                 return
 
-            task["downloaded_bytes"] += file_sizes.get(file_path, 0)
+            task["files_done"] = i + 1
             if total_bytes > 0:
-                task["progress"] = task["downloaded_bytes"] / total_bytes
+                task["progress"] = min(task["downloaded_bytes"] / total_bytes, 1.0)
             elif task["total_files"] > 0:
                 task["progress"] = (i + 1) / task["total_files"]
 

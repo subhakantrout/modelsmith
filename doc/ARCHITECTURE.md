@@ -8,7 +8,7 @@ ModelSmith is a desktop application for downloading, managing, and transforming 
 |-------|-----------|
 | Backend | Python 3.13, FastAPI, Uvicorn |
 | Frontend | React 19, TypeScript 6.0, Vite 8 |
-| UI | Tailwind CSS 4, @xyflow/react (ReactFlow), Recharts, Lucide icons |
+| UI | Tailwind CSS 4, @xyflow/react (ReactFlow), Lucide icons |
 | State | Zustand 5 |
 | ML | transformers, PyTorch 2.5, bitsandbytes, accelerate, mergekit, PEFT, safetensors |
 | System | psutil, huggingface_hub, httpx |
@@ -54,13 +54,20 @@ modelsmith/
   frontend/
     src/
       components/  — React components
-        Dashboard.tsx
-        PipelineCanvas.tsx
+        Shell.tsx          — Master layout (sidebar + topbar + view + bottombar)
+        Sidebar.tsx        — 52px left nav (5 view icons)
+        TopBar.tsx         — Logo, view label, HF token, theme toggle
+        BottomBar.tsx      — System status bar
+        RightPanel.tsx     — 290px context panel (node config)
+        WelcomeScreen.tsx  — Minimal brand + CTA
+        PipelineCanvas.tsx — ReactFlow pipeline editor
         DownloadManager.tsx
         HubSearch.tsx
-        ChatPanel.tsx
-        ModelBrowser.tsx
-        WelcomeScreen.tsx
+        HomeView.tsx
+        CanvasView.tsx
+        ModelsView.tsx
+        ChatView.tsx
+        SettingsView.tsx
         Logo.tsx
         nodes/     — Pipeline node components
           ModelInputNode.tsx
@@ -79,6 +86,8 @@ modelsmith/
         modelStore.ts
         systemStore.ts
         chatStore.ts
+        settingsStore.ts
+        viewStore.ts
         pipelineRunner.ts
         index.ts
       lib/

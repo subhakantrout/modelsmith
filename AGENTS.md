@@ -2,7 +2,7 @@
 
 ## Stack
 - **Backend**: Python 3.13, FastAPI, Uvicorn, Pydantic v2
-- **Frontend**: React 19, TypeScript 6.0, Vite 8, @xyflow/react (ReactFlow), Tailwind CSS 4, Recharts, Zustand 5, Lucide icons
+- **Frontend**: React 19, TypeScript 6.0, Vite 8, @xyflow/react (ReactFlow), Tailwind CSS 4, Zustand 5, Lucide icons
 - **ML**: transformers, PyTorch 2.5, bitsandbytes, accelerate, mergekit, PEFT, safetensors, huggingface_hub
 - **System**: psutil, nvidia-ml-py, httpx
 
@@ -19,12 +19,18 @@ backend/
   tests/        — pytest test suite
 frontend/
   src/
-    components/ — React components (Dashboard, PipelineCanvas, DownloadManager, HubSearch, ModelBrowser, nodes/*, etc.)
-    stores/     — Zustand stores (pipelineStore, modelStore, systemStore, chatStore, downloadStore)
+    components/ — React components (Shell, Sidebar, TopBar, BottomBar, RightPanel, 5 views, PipelineCanvas, nodes/*, etc.)
+    stores/     — Zustand stores (pipelineStore, modelStore, systemStore, chatStore, downloadStore, viewStore, settingsStore)
     lib/api.ts  — API client with typed methods for all endpoints
     types/      — TypeScript interfaces
 models/         — Downloaded models (gitignored)
 ```
+
+## UI Architecture
+- **Shell layout**: VS Code-style with 52px sidebar, top bar, bottom status bar, 290px right panel
+- **5 views**: Home (system overview + quick actions), Canvas (ReactFlow pipeline), Models (local model browser), Chat (full-page), Settings (HF token, theme, about)
+- **No react-router**: state-based view switching via `useViewStore`
+- **RightPanel**: context-sensitive — shows node config on Canvas when a node is selected
 
 ## Key Architecture
 - Pipeline nodes (7 types): ModelInput, Analyze, Abliterate, Merge, LoRA, Compress, Export
@@ -38,15 +44,6 @@ models/         — Downloaded models (gitignored)
 - **Frontend**: `DownloadManager.tsx` — persistent bottom panel, Active tab (progress bars, %, speed, ETA, current file, pause/cancel), History tab (completed/failed, retry, dismiss, clear all), global polling every 1.2s
 - **HubSearch.tsx**: modal for searching HF Hub, styled result cards, one-click download that opens DownloadManager panel
 
-## Dashboard
-- Header with Hub button (opens HubSearch), Canvas button
-- Stats row (4 stat cards with icons/gradients)
-- Charts row (radar + bar chart)
-- Layer activation heatmap (full width)
-- Model Status + Compare Models cards
-- Pipeline Steps list
-- Glassmorphism design: `backdrop-blur-xl`, gradient borders, `bg-gradient-to-br` cards, hover lift
-
 ## Important Conventions
 - Tailwind v4 (CSS-based config via `@theme`, no tailwind.config.js)
 - Stores in `stores/` directory, exported from `stores/index.ts`
@@ -54,6 +51,7 @@ models/         — Downloaded models (gitignored)
 - Types in `types/api.ts`
 - Node config syncing: each node's `onSubmit`/`onConfigChange` writes to pipelineStore, pipelineRunner reads them
 - Custom `gray-925` color defined in `index.css` via `@theme`
+- Brand gradient: `#6366f1` (indigo) → `#a855f7` (purple)
 
 ## Download Path
 - Backend defaults to `<project-root>/models/<model-name>/` (computed from `__file__`)

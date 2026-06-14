@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "../lib/api";
+import { useSettingsStore } from "../stores/settingsStore";
 import { useDownloadStore } from "../stores/downloadStore";
 import { Search, Download, X, Star, ArrowDown, Loader, AlertCircle } from "lucide-react";
 
@@ -16,6 +17,7 @@ export function HubSearch({ onClose }: HubSearchProps) {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const setPanelOpen = useDownloadStore((s) => s.setPanelOpen);
   const upsertDownload = useDownloadStore((s) => s.upsertDownload);
+  const hfToken = useSettingsStore((s) => s.hfToken);
   const inputRef = useRef<HTMLInputElement>(null);
   const pollRefs = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
 
@@ -46,7 +48,7 @@ export function HubSearch({ onClose }: HubSearchProps) {
     if (downloadingIds.has(modelId)) return;
     setDownloadingIds((prev) => new Set(prev).add(modelId));
     try {
-      const res = await api.hub.download(modelId);
+      const res = await api.hub.download(modelId, hfToken);
       setPanelOpen(true);
       const poll = setInterval(async () => {
         try {

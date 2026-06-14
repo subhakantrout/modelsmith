@@ -51,10 +51,12 @@ Local AI is powerful, but it's trapped behind three walls:
 ### Intelligence Layer
 
 - **🧠 Pipeline Advisor** — AI analyzes your hardware and recommends the optimal pipeline. Just describe your goal and ModelSmith builds the workflow.
-- **📊 Smart Dashboard** — Live hardware monitoring, model registry browser, capability radar chart, layer refusal heatmap, model comparison.
+- **📊 Home View** — System overview with hardware specs, local model browser, quick-action cards for every tool, and pipeline status.
 - **⬇️ Download Manager** — Queue, pause, resume, cancel downloads from HuggingFace Hub directly inside the app — with real-time progress bars, speed, ETA, and retry for failed downloads.
 - **🔍 HuggingFace Hub Integration** — Search the Hub from inside ModelSmith, browse results with download counts and tags, download any model with one click.
 - **💾 Project System** — Save/restore pipelines as JSON projects, export/import recipes, resume from checkpoints.
+- **🎨 VS Code-style Layout** — Persistent sidebar navigation, context-sensitive right panel for node configuration, full-page Chat and Settings views.
+- **🌓 Dark/Light Theme** — Toggle between dark and light mode via the header bar or Settings view.
 
 ### Hardware Awareness
 
@@ -162,8 +164,10 @@ Open **http://localhost:5173** 🎉
 | **Frontend type coverage** | Strict TypeScript, zero errors |
 | **API endpoints** | 40+ RESTful routes |
 | **Pipeline nodes** | 7 types (Load, Analyze, Abliterate, Merge, LoRA, Compress, Export) |
-| **Frontend components** | 30+ React components |
-| **State stores** | 6 Zustand stores |
+| **Frontend components** | 25+ React components |
+| **State stores** | 8 Zustand stores |
+| **App views** | 5 (Home, Canvas, Models, Chat, Settings) |
+| **Bundle size** | 466 KB (gzip: 141 KB) |
 
 ---
 
@@ -183,9 +187,10 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 - [x] Model Hub integration (browse, search, download with queue/progress)
 - [x] Download queue with pause/resume/cancel
 - [x] WebSocket streaming for inference and progress
+- [x] Dark/light theme toggle
+- [x] UI redesign with sidebar navigation and dedicated views
 - [ ] Tauri desktop wrapper (native app)
 - [ ] More merge methods (dare_ties, task_arithmetic)
-- [ ] Dark/light theme toggle
 
 ### v1.0 — Stable Release
 - [ ] Single `pip install modelsmith` command
@@ -241,7 +246,7 @@ python -m pytest backend/tests/ -v
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | React 19, TypeScript 6.0, Vite 8, @xyflow/react, Tailwind CSS 4, Recharts, Zustand 5, Lucide |
+| **Frontend** | React 19, TypeScript 6.0, Vite 8, @xyflow/react, Tailwind CSS 4, Zustand 5, Lucide |
 | **Backend** | Python 3.13, FastAPI, Uvicorn, Pydantic v2 |
 | **ML Engine** | transformers, PyTorch 2.5 (CUDA 12.4), bitsandbytes, accelerate |
 | **Model Ops** | mergekit, PEFT, safetensors |

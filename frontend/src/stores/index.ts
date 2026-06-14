@@ -6,3 +6,5 @@ export { useChatStore } from "./chatStore";
 export { useDownloadStore } from "./downloadStore";
 export type { DownloadTask } from "./downloadStore";
 export { useToastStore } from "./toastStore";
+export { useSettingsStore } from "./settingsStore";
+export { useViewStore } from "./viewStore";
