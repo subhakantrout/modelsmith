@@ -26,7 +26,7 @@ Local AI is powerful, but it's trapped behind three walls:
 
 | Wall | Problem | ModelSmith Solution |
 |------|---------|-------------------|
-| **🧱 Censorship** | Models refuse legitimate requests even after you download them | **One-click abliteration** — surgically removes refusal directions from any LLM |
+| ❄️ **Censorship** | Models refuse legitimate requests even after you download them | **One-click abliteration** — surgically removes refusal directions from any LLM |
 | **🧩 Capability Gaps** | No single model excels at everything | **Visual merging & LoRA** — combine strengths of multiple models with drag-and-drop |
 | **⚡ Hardware Mismatch** | Powerful models won't run on consumer hardware | **Smart compression** — auto-selects quantization level for your specific RAM/VRAM |
 
@@ -51,7 +51,9 @@ Local AI is powerful, but it's trapped behind three walls:
 ### Intelligence Layer
 
 - **🧠 Pipeline Advisor** — AI analyzes your hardware and recommends the optimal pipeline. Just describe your goal and ModelSmith builds the workflow.
-- **📊 Smart Dashboard** — Live hardware monitoring, model registry browser, capability radar chart, layer refusal heatmap.
+- **📊 Smart Dashboard** — Live hardware monitoring, model registry browser, capability radar chart, layer refusal heatmap, model comparison.
+- **⬇️ Download Manager** — Queue, pause, resume, cancel downloads from HuggingFace Hub directly inside the app — with real-time progress bars, speed, ETA, and retry for failed downloads.
+- **🔍 HuggingFace Hub Integration** — Search the Hub from inside ModelSmith, browse results with download counts and tags, download any model with one click.
 - **💾 Project System** — Save/restore pipelines as JSON projects, export/import recipes, resume from checkpoints.
 
 ### Hardware Awareness
@@ -115,8 +117,14 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r backend/requirements.txt
 
+# Optional — for downloading models from HuggingFace Hub
+pip install huggingface_hub
+
 # Frontend
 cd frontend && npm install && cd ..
+
+# Create local model storage
+mkdir -p models
 ```
 
 ### Run
@@ -154,8 +162,8 @@ Open **http://localhost:5173** 🎉
 | **Frontend type coverage** | Strict TypeScript, zero errors |
 | **API endpoints** | 40+ RESTful routes |
 | **Pipeline nodes** | 7 types (Load, Analyze, Abliterate, Merge, LoRA, Compress, Export) |
-| **Frontend components** | 25+ React components |
-| **State stores** | 5 Zustand stores |
+| **Frontend components** | 30+ React components |
+| **State stores** | 6 Zustand stores |
 
 ---
 
@@ -172,10 +180,11 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 ## 🛣 Roadmap
 
 ### v0.2 — Near Term
+- [x] Model Hub integration (browse, search, download with queue/progress)
+- [x] Download queue with pause/resume/cancel
 - [ ] WebSocket streaming for inference and progress
 - [ ] Tauri desktop wrapper (native app)
 - [ ] More merge methods (dare_ties, task_arithmetic)
-- [ ] Model Hub integration (browse community recipes)
 - [ ] Dark/light theme toggle
 
 ### v1.0 — Stable Release
@@ -248,8 +257,23 @@ python -m pytest backend/tests/ -v
 | `GET` | `/api/health` | 🩺 Health check |
 | `GET` | `/api/system/specs` | 💻 Hardware detection + tier |
 | `GET` | `/api/system/resources` | 📊 Live RAM/CPU/GPU |
+| `GET` | `/api/models/registry` | 📋 List all local models |
+| `GET` | `/api/models/summary` | 📊 Loaded model + hardware summary |
 | `POST` | `/api/models/load` | 📥 Load any HF model |
 | `GET` | `/api/models/loaded` | 📋 Current model status |
+| `POST` | `/api/models/unload` | 🔌 Unload current model |
+| `POST` | `/api/models/inspect` | 🔍 Inspect model metadata |
+| `POST` | `/api/models/scan` | 🔎 Scan custom directory for models |
+| `GET` | `/api/models/hub-search` | 🌐 Search HuggingFace Hub |
+| `POST` | `/api/models/hub-download` | ⬇️ Start Hub download (queued) |
+| `GET` | `/api/models/hub-downloads` | 📋 List all downloads |
+| `GET` | `/api/models/hub-download-status/{id}` | 📈 Download progress |
+| `POST` | `/api/models/hub-download-pause/{id}` | ⏸️ Pause download |
+| `POST` | `/api/models/hub-download-resume/{id}` | ▶️ Resume download |
+| `POST` | `/api/models/hub-download-cancel/{id}` | ⛔ Cancel download |
+| `POST` | `/api/models/hub-download-retry/{id}` | 🔄 Retry failed download |
+| `POST` | `/api/models/hub-download-clear` | 🧹 Clear completed/failed |
+| `POST` | `/api/analyze/refusal` | 🔬 Refusal score for text |
 | `POST` | `/api/analyze/refusal` | 🔬 Refusal score for text |
 | `POST` | `/api/abliterate/find-direction` | 🧭 Find refusal vector |
 | `POST` | `/api/abliterate/apply` | ✂️ Apply ablation |
