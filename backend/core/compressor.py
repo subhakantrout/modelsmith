@@ -91,6 +91,9 @@ def run_quantization(
     output_path: str,
     quant_id: str = "q4_k_m",
 ) -> dict:
+    from backend.core.security import resolve_model_path
+    input_path = resolve_model_path(input_path)
+    output_path = resolve_model_path(output_path)
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"Input not found: {input_path}")
     convert = shutil.which("llama-quantize") or shutil.which("llama.cpp/quantize")

@@ -121,10 +121,16 @@ class HubDownloadRequest(BaseModel):
 @router.post("/hub-download")
 async def hub_download(req: HubDownloadRequest):
     from backend.core.model_registry import get_download_manager
+    from backend.core.security import resolve_model_path
     try:
+        output_dir = req.output_dir
+        if output_dir:
+            output_dir = resolve_model_path(output_dir)
         dm = get_download_manager()
-        download_id = dm.start(req.model_id, req.output_dir, req.token)
+        download_id = dm.start(req.model_id, output_dir, req.token)
         return {"download_id": download_id, "status": "started"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

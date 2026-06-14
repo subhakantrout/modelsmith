@@ -10,6 +10,7 @@ from backend.core.lora_manager import (
     unload_lora,
     extract_lora,
 )
+from backend.core.security import validate_path_exists
 
 router = APIRouter(prefix="/api/lora", tags=["lora"])
 
@@ -38,8 +39,11 @@ async def lora_status():
 @router.post("/scan")
 async def lora_scan(req: LoraScanRequest):
     try:
-        adapters = scan_adapters(req.directory)
+        safe_dir = validate_path_exists(req.directory)
+        adapters = scan_adapters(safe_dir)
         return {"adapters": adapters}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

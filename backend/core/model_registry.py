@@ -184,16 +184,6 @@ class DownloadManager:
             for did in to_remove:
                 del self._tasks[did]
 
-    def _clear_terminal(self):
-        with self._lock:
-            terminal_state = ("completed", "error", "cancelled")
-            to_remove = [did for did, t in self._tasks.items()
-                         if t["status"] in terminal_state]
-            for did in to_remove:
-                if did in self._queue:
-                    self._queue.remove(did)
-                del self._tasks[did]
-
     def list_all(self) -> list[dict]:
         result = []
         for did, t in self._tasks.items():

@@ -39,6 +39,14 @@ All notable changes to ModelSmith.
 - Installed peft library (fixes test_is_peft_available)
 - Tier3 test CUDA-aware
 
+### Fixed
+- **doc/API.md drift**: Synchronized with actual API routes (analyze/start → analyze/refusal, merge/start → merge/run, etc.)
+- **hub_download output_dir not validated**: Added `resolve_model_path()` call before passing to download manager
+- **lora/scan directory not validated**: Added `validate_path_exists()` call with path security check
+- **run_quantization path injection**: Added `resolve_model_path()` on input/output paths before subprocess call
+- **CORS permissive**: Narrowed from `allow_methods=["*"]` to explicit GET/POST/PUT/DELETE/OPTIONS
+- **Removed dead `_clear_terminal()` method**: Was the source of the original `list_all()` bug described in analysis
+
 ### Known
 - NVIDIA driver 550.163.01 supports CUDA 12.4 but PyTorch 2.12.0 needs CUDA 13.0 — GPU acceleration unavailable until manual driver update from NVIDIA.com
 - Vite chunk size warnings are cosmetic (single bundle, no code-splitting configured)

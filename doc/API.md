@@ -58,23 +58,57 @@ When `output_dir` is empty, backend defaults to `<project-root>/models/<model-na
 }
 ```
 
-## Pipeline Steps
+## Analyze
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/analyze/start` | Run model analysis |
-| POST | `/api/abliterate/start` | Run refusal abliteration |
-| POST | `/api/abliterate/estimate` | Estimate abliteration time |
-| POST | `/api/merge/start` | Merge two models |
-| POST | `/api/lora/start` | Apply LoRA adapter |
-| POST | `/api/compress/start` | Run compression |
-| GET | `/api/compress/quants` | Available quantization types |
-| POST | `/api/compress/quant-estimate` | Estimate quantization |
-| POST | `/api/compress/prune-estimate` | Estimate pruning |
-| POST | `/api/compress/sparsify-estimate` | Estimate sparsification |
-| POST | `/api/compress/kv-estimate` | Estimate KV cache compression |
-| POST | `/api/export/start` | Export model |
+| POST | `/api/analyze/refusal` | Score a model output for refusal patterns |
+| GET | `/api/analyze/layers` | Layer activation heatmap (random seed) |
+
+## Abliterate
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/abliterate/find-direction` | Find refusal direction at a layer |
+| POST | `/api/abliterate/apply` | Apply abliteration hook to model |
+| POST | `/api/abliterate/remove` | Remove all abliteration hooks |
+| GET | `/api/abliterate/status` | Check if abliteration is active |
+| GET | `/api/abliterate/layers` | Get model layer info for abliteration |
+| POST | `/api/abliterate/validate` | Validate abliteration configuration |
+
+## Merging
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/merge/methods` | Available merge methods |
+| POST | `/api/merge/validate` | Validate merge config + estimate RAM |
+| POST | `/api/merge/run` | Execute a model merge |
+
+## LoRA
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/lora/status` | PEFT availability check |
+| POST | `/api/lora/scan` | Scan directory for adapters |
+| POST | `/api/lora/validate` | Validate an adapter path |
+| POST | `/api/lora/apply` | Apply a LoRA adapter to loaded model |
+| POST | `/api/lora/fuse` | Fuse LoRA weights into model |
+| POST | `/api/lora/unload` | Unload LoRA adapter |
+| POST | `/api/lora/extract` | Extract LoRA from model |
+
+## Compression
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/compress/quants` | Available GGUF quantization types |
+| GET | `/api/compress/sparsification-methods` | Available sparsification methods |
+| GET | `/api/compress/kv-methods` | Available KV cache compression methods |
+| POST | `/api/compress/quant-estimate` | Estimate GGUF quantized size |
+| POST | `/api/compress/prune-estimate` | Estimate pruned size |
+| POST | `/api/compress/sparsify-estimate` | Estimate sparsified size |
+| POST | `/api/compress/kv-estimate` | Estimate KV cache savings |
+
+## Export
+| Method | Endpoint | Description |
+|--------|----------|-------------|
 | GET | `/api/export/formats` | Available export formats |
-| POST | `/api/export/estimate` | Estimate export size |
+| POST | `/api/export/validate` | Validate export configuration + estimate size |
+| POST | `/api/export/run` | Execute model export |
 
 ## Chat
 | Method | Endpoint | Description |
@@ -82,10 +116,24 @@ When `output_dir` is empty, backend defaults to `<project-root>/models/<model-na
 | POST | `/api/chat/generate` | Generate text from loaded model |
 | GET | `/api/chat/status` | Chat readiness + memory info |
 
+## WebSocket
+| Endpoint | Description |
+|----------|-------------|
+| `ws://localhost:8765/api/ws/chat` | Streaming chat inference (chunk/done/error messages) |
+
+## Pipeline
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/pipeline/run` | Execute multi-step pipeline |
+| GET | `/api/pipeline/node-types` | Available node types |
+
 ## System
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/system/info` | Full system specs + budget |
+| GET | `/api/system/specs` | Full system specs + tier + budget |
+| GET | `/api/system/profiles` | Available hardware profiles |
+| POST | `/api/system/preflight` | Compute preflight check for an operation |
+| GET | `/api/system/resources` | Live RAM / CPU / GPU usage |
 
 ## Advisor
 | Method | Endpoint | Description |
@@ -94,7 +142,7 @@ When `output_dir` is empty, backend defaults to `<project-root>/models/<model-na
 | GET | `/api/advisor/recommend` | Get recommendation for hardware |
 | POST | `/api/advisor/estimate-time` | Estimate pipeline runtime |
 | POST | `/api/advisor/dry-run` | Validate pipeline feasibility |
-| POST | `/api/advisor/alternatives` | Get alternatives for failed step |
+| GET | `/api/advisor/alternatives/{step}` | Get alternatives for failed step |
 | POST | `/api/advisor/compare` | Compare two model configs |
 
 ## Projects
