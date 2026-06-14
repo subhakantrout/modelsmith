@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { usePipelineStore } from '../pipelineStore';
+import { usePipelineStore } from '../stores/pipelineStore';
 
 // Mock the API dependency
-vi.mock('../../lib/api', () => ({
+vi.mock('../lib/api', () => ({
   api: {
     projects: {
       save: vi.fn(),

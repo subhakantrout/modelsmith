@@ -112,7 +112,7 @@ def _capture_activations(
                     messages, tokenize=False, add_generation_prompt=True
                 )
             else:
-                full_prompt = f"<|user|>\n{prompt}\n<|assistant|>\n"
+                full_prompt = f"User: {prompt}\n\nAssistant:"
             inputs = tokenizer(full_prompt, return_tensors="pt", truncation=True, max_length=512).to(device)
             with torch.no_grad():
                 model.generate(

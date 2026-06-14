@@ -7,8 +7,8 @@ logger = logging.getLogger("modelsmith.inference")
 
 def format_prompt(prompt: str, system_prompt: str = "") -> str:
     if system_prompt:
-        return f"<|system|>\n{system_prompt}\n<|user|>\n{prompt}\n<|assistant|>\n"
-    return f"<|user|>\n{prompt}\n<|assistant|>\n"
+        return f"System: {system_prompt}\n\nUser: {prompt}\n\nAssistant:"
+    return f"User: {prompt}\n\nAssistant:"
 
 
 def estimate_tokens(text: str) -> int:
