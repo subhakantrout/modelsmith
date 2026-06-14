@@ -18,6 +18,9 @@ export function ModelBrowser({ onSelect, onClose }: ModelBrowserProps) {
   const [hubResults, setHubResults] = useState<any[]>([]);
   const [hubLoading, setHubLoading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{
+    status: string; progress: number; currentFile: string; filesDone: number; totalFiles: number;
+  } | null>(null);
 
   useEffect(() => {
     api.models.registry().then((r) => {
@@ -93,6 +96,18 @@ export function ModelBrowser({ onSelect, onClose }: ModelBrowserProps) {
             </div>
             {hubResults.length > 0 && (
               <div className="max-h-60 overflow-y-auto space-y-1">
+                {downloadProgress && downloadProgress.status === "downloading" && (
+                  <div className="bg-gray-800 border border-gray-700 rounded p-2 text-xs space-y-1 mb-1">
+                    <div className="flex justify-between text-gray-300">
+                      <span>Downloading... {Math.round(downloadProgress.progress * 100)}%</span>
+                      <span>{downloadProgress.filesDone}/{downloadProgress.totalFiles} files</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: `${downloadProgress.progress * 100}%` }} />
+                    </div>
+                    <div className="text-gray-500 truncate max-w-full">{downloadProgress.currentFile}</div>
+                  </div>
+                )}
                 {hubResults.map((m) => (
                   <div key={m.id} className="flex items-center justify-between bg-gray-800 border border-gray-700 rounded p-2 text-xs">
                     <div className="flex-1 min-w-0">
@@ -105,20 +120,45 @@ export function ModelBrowser({ onSelect, onClose }: ModelBrowserProps) {
                     <button
                       onClick={async () => {
                         setDownloadingId(m.id);
+                        setDownloadProgress({ status: "starting", progress: 0, currentFile: "", filesDone: 0, totalFiles: 0 });
                         try {
                           const res = await api.hub.download(m.id);
-                          onSelect(res.path);
-                          onClose();
+                          const poll = setInterval(async () => {
+                            try {
+                              const s = await api.hub.downloadStatus(res.download_id);
+                              if (s.status === "completed") {
+                                clearInterval(poll);
+                                setDownloadingId(null);
+                                setDownloadProgress(null);
+                                onSelect(s.path!);
+                                onClose();
+                              } else if (s.status === "error") {
+                                clearInterval(poll);
+                                setDownloadingId(null);
+                                setDownloadProgress(null);
+                                alert("Download failed: " + (s.error || "unknown error"));
+                              } else {
+                                setDownloadProgress({
+                                  status: s.status,
+                                  progress: s.progress,
+                                  currentFile: s.current_file,
+                                  filesDone: s.files_done,
+                                  totalFiles: s.total_files,
+                                });
+                              }
+                            } catch { clearInterval(poll); setDownloadingId(null); setDownloadProgress(null); }
+                          }, 1000);
                         } catch (err) {
+                          setDownloadingId(null);
+                          setDownloadProgress(null);
                           alert("Download failed: " + (err as Error).message);
                         }
-                        setDownloadingId(null);
                       }}
                       disabled={downloadingId === m.id}
                       className="px-2 py-1 text-xs bg-green-700 text-gray-200 rounded hover:bg-green-600 ml-2 flex items-center gap-1 disabled:opacity-50 disabled:cursor-wait"
                     >
-                      {downloadingId === m.id ? (
-                        <><svg className="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Downloading...</>
+                      {downloadingId === m.id && downloadProgress ? (
+                        <span className="text-[10px]">{Math.round(downloadProgress.progress * 100)}%</span>
                       ) : (
                         <><Download size={10} /> Download</>
                       )}

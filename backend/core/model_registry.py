@@ -1,4 +1,6 @@
 import os
+import uuid
+import threading
 import logging
 from backend.core.model_loader import detect_format, ModelFormat
 
@@ -91,23 +93,67 @@ def search_hub(query: str, limit: int = 20) -> list[dict]:
         raise RuntimeError(f"Failed to search hub: {e}")
 
 
-def download_from_hub(model_id: str, output_dir: str = "", token: str | None = None) -> dict:
-    if not output_dir:
-        output_dir = os.path.join(_PROJECT_ROOT, "models", model_id.split("/")[-1])
+_download_tracker: dict[str, dict] = {}
+
+
+def start_hub_download(model_id: str, output_dir: str = "", token: str | None = None) -> str:
+    download_id = str(uuid.uuid4())
+    _download_tracker[download_id] = {
+        "status": "starting",
+        "progress": 0.0,
+        "current_file": "",
+        "files_done": 0,
+        "total_files": 0,
+        "model_id": model_id,
+    }
+    thread = threading.Thread(
+        target=_download_worker,
+        args=(download_id, model_id, output_dir, token),
+        daemon=True,
+    )
+    thread.start()
+    return download_id
+
+
+def get_download_status(download_id: str) -> dict | None:
+    return _download_tracker.get(download_id)
+
+
+def _download_worker(download_id: str, model_id: str, output_dir: str, token: str | None):
     try:
-        from huggingface_hub import snapshot_download
+        from huggingface_hub import HfApi, hf_hub_download
+
+        if not output_dir:
+            output_dir = os.path.join(_PROJECT_ROOT, "models", model_id.split("/")[-1])
+
+        api = HfApi()
+        repo_files = api.list_repo_files(repo_id=model_id, token=token)
+        total = len(repo_files)
+
+        _download_tracker[download_id].update(status="downloading", total_files=total)
+
         os.makedirs(output_dir, exist_ok=True)
-        result = snapshot_download(
-            repo_id=model_id,
-            local_dir=output_dir,
-            token=token,
-            resume_download=True,
+
+        for i, file_path in enumerate(repo_files):
+            _download_tracker[download_id].update(
+                current_file=file_path,
+                files_done=i,
+                progress=round(i / total, 4) if total > 0 else 0,
+            )
+            hf_hub_download(
+                repo_id=model_id,
+                filename=file_path,
+                local_dir=output_dir,
+                token=token,
+                resume_download=True,
+                local_dir_use_symlinks=False,
+            )
+
+        _download_tracker[download_id].update(
+            status="completed", progress=1.0, files_done=total, path=output_dir
         )
-        return {"status": "downloaded", "path": result, "model_id": model_id}
-    except ImportError:
-        raise RuntimeError("huggingface_hub not installed. Install with: pip install huggingface_hub")
     except Exception as e:
-        raise RuntimeError(f"Failed to download {model_id}: {e}")
+        _download_tracker[download_id].update(status="error", error=str(e))
 
 
 def get_model_summary() -> dict:

@@ -239,10 +239,21 @@ export const api = {
     search: (query: string, limit = 20) =>
       request<{ results: any[] }>(`/models/hub-search?query=${encodeURIComponent(query)}&limit=${limit}`),
     download: (modelId: string, outputDir?: string) =>
-      request<any>("/models/hub-download", {
+      request<{ download_id: string; status: string }>("/models/hub-download", {
         method: "POST",
         body: JSON.stringify({ model_id: modelId, output_dir: outputDir || "" }),
       }),
+    downloadStatus: (downloadId: string) =>
+      request<{
+        status: string;
+        progress: number;
+        current_file: string;
+        files_done: number;
+        total_files: number;
+        path?: string;
+        error?: string;
+        model_id: string;
+      }>(`/models/hub-download-status/${downloadId}`),
   },
 
   advisor: {

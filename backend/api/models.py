@@ -111,9 +111,18 @@ class HubDownloadRequest(BaseModel):
 
 @router.post("/hub-download")
 async def hub_download(req: HubDownloadRequest):
-    from backend.core.model_registry import download_from_hub
+    from backend.core.model_registry import start_hub_download
     try:
-        result = download_from_hub(req.model_id, req.output_dir, req.token)
-        return result
-    except RuntimeError as e:
+        download_id = start_hub_download(req.model_id, req.output_dir, req.token)
+        return {"download_id": download_id, "status": "started"}
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/hub-download-status/{download_id}")
+async def hub_download_status(download_id: str):
+    from backend.core.model_registry import get_download_status
+    status = get_download_status(download_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Download not found")
+    return status
