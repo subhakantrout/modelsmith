@@ -10,7 +10,7 @@ import { HubSearch } from "./HubSearch";
 import {
   Layers, Cpu, HardDrive, Radio, GitMerge,
   Activity, AlertTriangle, CheckCircle, Zap, FileText,
-  ArrowRight, Box, Search, Download, FolderOpen, Menu,
+  Box, Search, Download,
 } from "lucide-react";
 
 interface DashboardProps {
@@ -68,7 +68,7 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
   const clearPipeline = usePipelineStore((s) => s.clearPipeline);
   const inspectedModel = useModelStore((s) => s.inspectedModel);
   const systemInfo = useSystemStore((s) => s.info);
-  const { panelOpen, hubSearchOpen, setHubSearchOpen } = useDownloadStore();
+  const { hubSearchOpen, setHubSearchOpen } = useDownloadStore();
   const [models, setModels] = useState<ModelRegistryItem[]>([]);
   const [layerData, setLayerData] = useState<any>(null);
   const [compareModelA, setCompareModelA] = useState("");

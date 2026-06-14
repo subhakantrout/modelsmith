@@ -76,8 +76,8 @@ async def kv_estimate(req: KVAnalyzeRequest):
             return estimate_kv_savings(req.context_length, 32, 4096, req.method)
         return estimate_kv_savings(
             req.context_length,
-            mgr.model.config.num_hidden_layers or 32,
-            mgr.model.config.hidden_size or 4096,
+            getattr(mgr.model.config, "num_hidden_layers", 32),
+            getattr(mgr.model.config, "hidden_size", 4096),
             req.method,
         )
     except ValueError as e:

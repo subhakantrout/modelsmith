@@ -1,4 +1,5 @@
 from typing import Optional
+from backend.core.system import get_tier
 
 PRESETS = {
     "uncensor": {
@@ -52,19 +53,6 @@ PRESETS = {
         ],
     },
 }
-
-
-def get_tier(ram_gb: float, vram_gb: Optional[float] = None) -> int:
-    vram = vram_gb or 0
-    if ram_gb >= 64 and vram >= 48:
-        return 5
-    if ram_gb >= 32 and vram >= 24:
-        return 4
-    if ram_gb >= 16 and vram >= 8:
-        return 3
-    if ram_gb >= 8 and vram >= 4:
-        return 2
-    return 1
 
 
 def get_pipeline_presets() -> list[dict]:

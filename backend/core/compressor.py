@@ -141,7 +141,11 @@ def prune_layers(model, layers_to_keep: list[int]) -> dict:
             obj = getattr(obj, part)
         
         layer_container = getattr(obj, parts[-1])
-        new_layers = layer_container.__class__()
+        try:
+            new_layers = layer_container.__class__()
+        except TypeError:
+            import torch
+            new_layers = torch.nn.ModuleList()
         for i in layers_to_keep:
             new_layers.append(layer_container[i])
             

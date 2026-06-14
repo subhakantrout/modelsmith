@@ -4,14 +4,10 @@ import platform
 from typing import Optional
 
 try:
-    import nvidia_ml as pynvml  # nvidia-ml-py
+    import pynvml
     HAS_NVIDIA = True
 except Exception:
-    try:
-        import pynvml
-        HAS_NVIDIA = True
-    except Exception:
-        HAS_NVIDIA = False
+    HAS_NVIDIA = False
 
 
 def detect_hardware() -> dict:

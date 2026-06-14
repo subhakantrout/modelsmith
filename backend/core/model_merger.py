@@ -25,6 +25,8 @@ def compute_merge_config(method: str, models: list[dict]) -> dict:
     if len(models) < 2:
         raise ValueError("At least 2 models required for merging")
     for m in models:
+        if isinstance(m, str):
+            m = {"path": m, "parameters_b": 7}
         if not os.path.exists(m.get("path", "")):
             raise FileNotFoundError(f"Model path not found: {m.get('path')}")
 

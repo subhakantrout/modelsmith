@@ -201,7 +201,7 @@ class DownloadManager:
         with self._lock:
             active = sum(
                 1 for t in self._tasks.values()
-                if t["status"] in ("downloading", "pausing", "cancelling")
+                if t["status"] in ("downloading", "pausing", "cancelling", "starting")
             )
             while active < self.MAX_CONCURRENT and self._queue:
                 next_id = self._queue.pop(0)

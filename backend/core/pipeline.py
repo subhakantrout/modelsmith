@@ -219,6 +219,8 @@ def _handle_lora(config: dict) -> dict:
         result = fuse_lora()
     elif action == "extract":
         result = extract_lora(config.get("output_dir", "/tmp/lora-extract"))
+    elif action == "unload":
+        result = unload_lora()
     else:
         raise ValueError(f"Unknown LoRA action: {action}")
     return {"node_type": "lora", "status": "done", "result": result}
@@ -226,9 +228,49 @@ def _handle_lora(config: dict) -> dict:
 
 register_node_type("lora", _handle_lora, {
     "label": "LoRA",
-    "description": "Apply, fuse, or extract LoRA adapters",
+    "description": "Apply, fuse, extract, or unload LoRA adapters",
     "config_fields": [
         {"name": "action", "type": "string", "required": True, "label": "Action"},
         {"name": "adapter_path", "type": "string", "required": False, "label": "Adapter Path"},
+    ],
+})
+
+
+def _handle_compress(config: dict) -> dict:
+    from backend.core.compressor import estimate_gguf_quant_size, estimate_pruned_size, estimate_sparsified_size
+    from backend.core.kv_compress import estimate_kv_savings
+    from backend.core.model_manager import get_manager
+    method = config.get("method", "quant")
+    original_gb = config.get("original_gb", 0)
+    if original_gb == 0:
+        mgr = get_manager()
+        if mgr.is_loaded and hasattr(mgr.model, "config"):
+            cfg = mgr.model.config
+            original_gb = (getattr(cfg, "num_hidden_layers", 32) * getattr(cfg, "hidden_size", 4096) * 4) / (1024**3)
+    if method == "quant":
+        quant_id = config.get("quant", "q4_k_m")
+        result = estimate_gguf_quant_size(original_gb, quant_id)
+    elif method == "prune":
+        ratio = config.get("ratio", "medium")
+        result = estimate_pruned_size(original_gb, ratio)
+    elif method == "sparsify":
+        sp_method = config.get("method_id", "magnitude")
+        result = estimate_sparsified_size(original_gb, sp_method)
+    elif method == "kv":
+        ctx = config.get("context_length", 4096)
+        layers = config.get("num_layers", 32)
+        hidden = config.get("hidden_size", 4096)
+        kv_method = config.get("kv_method", "turboquant")
+        result = estimate_kv_savings(ctx, layers, hidden, kv_method)
+    else:
+        raise ValueError(f"Unknown compression method: {method}")
+    return {"node_type": "compress", "status": "done", "result": result}
+
+
+register_node_type("compress", _handle_compress, {
+    "label": "Compress",
+    "description": "Quantize, prune, sparsify, or compress KV cache",
+    "config_fields": [
+        {"name": "method", "type": "string", "required": True, "label": "Compression Method"},
     ],
 })
