@@ -1,7 +1,7 @@
 import { api } from "../lib/api";
 import { usePipelineStore, type PipelineNode } from "./pipelineStore";
 import { useModelStore } from "./modelStore";
-import type { SystemInfo } from "../types/api";
+
 
 type NodeStatus = "idle" | "running" | "done" | "error";
 
@@ -48,30 +48,7 @@ function getTopologicalOrder(
   return order;
 }
 
-export async function dryRunPipeline(systemInfo?: SystemInfo) {
-  const state = usePipelineStore.getState();
-  const { nodes, edges } = state;
-  const order = getTopologicalOrder(nodes, edges);
-  if (order.length !== nodes.length) {
-    return { valid: false, errors: ["Pipeline contains a cycle"], warnings: [] };
-  }
-  const pipeline = order.map((id) => {
-    const n = nodes.find((x) => x.id === id);
-    return { type: n?.data.type || "unknown" };
-  });
-  try {
-    if (!systemInfo) {
-      const { useSystemStore } = await import('./systemStore');
-      systemInfo = useSystemStore.getState().info ?? undefined;
-    }
-    const tier = systemInfo?.tier ?? 3;
-    const ramGb = systemInfo?.specs.ram_total_gb ?? 16;
-    const diskGb = 50;
-    return await api.advisor.dryRun(pipeline, tier, ramGb, diskGb);
-  } catch {
-    return { valid: false, errors: ["Dry run API unavailable"], warnings: [] };
-  }
-}
+
 
 export async function runPipeline() {
   const state = usePipelineStore.getState();

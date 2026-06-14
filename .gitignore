@@ -41,3 +41,7 @@ htmlcov/
 .superpowers/
 docs/superpowers/
 
+
+# Extraneous docs
+doc/
+frontend/README.md

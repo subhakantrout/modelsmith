@@ -22,7 +22,7 @@ import {
   CompressNode,
 } from "./nodes";
 import type { PipelineNodeProps } from "./nodes/types";
-import { runPipeline, dryRunPipeline } from "../stores/pipelineRunner";
+import { runPipeline } from "../stores/pipelineRunner";
 import { api } from "../lib/api";
 
 const typeToComponent: Record<string, React.ComponentType<PipelineNodeProps>> = {
@@ -102,20 +102,6 @@ export function PipelineCanvas() {
     }
   }, [nodes]);
 
-  const handleDryRun = useCallback(async () => {
-    if (nodes.length === 0) return;
-    try {
-      const result = await dryRunPipeline(systemInfo || undefined);
-      if (result.valid) {
-        addToast(`Pipeline valid: ${result.steps_validated} steps`, "success");
-      } else {
-        const errors = (result.errors || []).join("; ");
-        addToast(`Pipeline invalid: ${errors}`, "error");
-      }
-    } catch (err) {
-      addToast(`Dry run failed: ${(err as Error).message}`, "error");
-    }
-  }, [nodes, systemInfo, addToast]);
 
   const handleExportRecipe = useCallback(async () => {
     const id = pipelineName.toLowerCase().replace(/\s+/g, "-");
@@ -178,7 +164,7 @@ export function PipelineCanvas() {
               className="hidden sm:block px-2 py-1 text-xs bg-gray-700 border border-gray-500 rounded text-gray-100 w-28 lg:w-40"
             />
             <button onClick={handleSave} className="px-2 py-1 text-xs font-medium bg-emerald-700 text-gray-200 rounded hover:bg-emerald-600">Save</button>
-            <button onClick={handleDryRun} disabled={isRunning || nodes.length === 0} className="px-2 py-1 text-xs font-medium bg-amber-600 text-gray-100 rounded hover:bg-amber-500 disabled:opacity-50">Dry Run</button>
+
             <button onClick={handleRun} disabled={isRunning || nodes.length === 0} className="px-2 sm:px-4 py-1 text-xs font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50">{isRunning ? "Running..." : "Run"}</button>
             <button onClick={handleExportRecipe} disabled={nodes.length === 0} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600 disabled:opacity-50">Export Recipe</button>
             <button onClick={() => setShowImportModal(true)} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600">Import</button>
