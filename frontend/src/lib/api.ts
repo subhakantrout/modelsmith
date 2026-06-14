@@ -21,6 +21,7 @@ import type {
   AdvisorRecommendation,
   ModelSummary,
   ModelRegistryItem,
+  DownloadStatus,
 } from "../types/api";
 
 const BASE = "/api";
@@ -244,16 +245,19 @@ export const api = {
         body: JSON.stringify({ model_id: modelId, output_dir: outputDir || "" }),
       }),
     downloadStatus: (downloadId: string) =>
-      request<{
-        status: string;
-        progress: number;
-        current_file: string;
-        files_done: number;
-        total_files: number;
-        path?: string;
-        error?: string;
-        model_id: string;
-      }>(`/models/hub-download-status/${downloadId}`),
+      request<DownloadStatus>(`/models/hub-download-status/${downloadId}`),
+    downloads: () =>
+      request<{ downloads: DownloadStatus[] }>("/models/hub-downloads"),
+    pause: (downloadId: string) =>
+      request<{ status: string }>(`/models/hub-download-pause/${downloadId}`, { method: "POST" }),
+    resume: (downloadId: string) =>
+      request<{ status: string }>(`/models/hub-download-resume/${downloadId}`, { method: "POST" }),
+    cancel: (downloadId: string) =>
+      request<{ status: string }>(`/models/hub-download-cancel/${downloadId}`, { method: "POST" }),
+    retry: (downloadId: string) =>
+      request<{ download_id: string; status: string }>(`/models/hub-download-retry/${downloadId}`, { method: "POST" }),
+    clearCompleted: () =>
+      request<{ status: string }>("/models/hub-download-clear", { method: "POST" }),
   },
 
   advisor: {

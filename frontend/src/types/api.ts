@@ -202,6 +202,23 @@ export interface ModelRegistryItem {
   size_gb: number;
 }
 
+export interface DownloadStatus {
+  download_id: string;
+  model_id: string;
+  status: string;
+  progress: number;
+  current_file: string;
+  files_done: number;
+  total_files: number;
+  downloaded_bytes: number;
+  total_bytes: number;
+  speed_bytes_per_sec: number;
+  path?: string;
+  error?: string;
+  started_at?: number;
+  completed_at?: number;
+}
+
 export interface ModelSummary {
   loaded: boolean;
   tier: number;

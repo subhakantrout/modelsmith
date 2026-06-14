@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --color-gray-925: #14181f;
+}
+
 *,
 *::before,
 *::after {
@@ -20,6 +24,7 @@ body {
 }
 
 .scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
   height: 4px;
 }
 
@@ -30,4 +35,8 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: #4B5563;
   border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
 }

@@ -111,9 +111,10 @@ class HubDownloadRequest(BaseModel):
 
 @router.post("/hub-download")
 async def hub_download(req: HubDownloadRequest):
-    from backend.core.model_registry import start_hub_download
+    from backend.core.model_registry import get_download_manager
     try:
-        download_id = start_hub_download(req.model_id, req.output_dir, req.token)
+        dm = get_download_manager()
+        download_id = dm.start(req.model_id, req.output_dir, req.token)
         return {"download_id": download_id, "status": "started"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -121,8 +122,61 @@ async def hub_download(req: HubDownloadRequest):
 
 @router.get("/hub-download-status/{download_id}")
 async def hub_download_status(download_id: str):
-    from backend.core.model_registry import get_download_status
-    status = get_download_status(download_id)
+    from backend.core.model_registry import get_download_manager
+    dm = get_download_manager()
+    status = dm.get(download_id)
     if not status:
         raise HTTPException(status_code=404, detail="Download not found")
     return status
+
+
+@router.get("/hub-downloads")
+async def hub_downloads():
+    from backend.core.model_registry import get_download_manager
+    dm = get_download_manager()
+    return {"downloads": dm.list_all()}
+
+
+@router.post("/hub-download-pause/{download_id}")
+async def hub_download_pause(download_id: str):
+    from backend.core.model_registry import get_download_manager
+    dm = get_download_manager()
+    if dm.pause(download_id):
+        return {"status": "pausing"}
+    raise HTTPException(status_code=400, detail="Cannot pause")
+
+
+@router.post("/hub-download-resume/{download_id}")
+async def hub_download_resume(download_id: str):
+    from backend.core.model_registry import get_download_manager
+    dm = get_download_manager()
+    if dm.resume(download_id):
+        return {"status": "resumed"}
+    raise HTTPException(status_code=400, detail="Cannot resume")
+
+
+@router.post("/hub-download-cancel/{download_id}")
+async def hub_download_cancel(download_id: str):
+    from backend.core.model_registry import get_download_manager
+    dm = get_download_manager()
+    if dm.cancel(download_id):
+        return {"status": "cancelling"}
+    raise HTTPException(status_code=400, detail="Cannot cancel")
+
+
+@router.post("/hub-download-retry/{download_id}")
+async def hub_download_retry(download_id: str):
+    from backend.core.model_registry import get_download_manager
+    dm = get_download_manager()
+    new_id = dm.retry(download_id)
+    if new_id:
+        return {"download_id": new_id, "status": "retrying"}
+    raise HTTPException(status_code=400, detail="Cannot retry")
+
+
+@router.post("/hub-download-clear")
+async def hub_download_clear():
+    from backend.core.model_registry import get_download_manager
+    dm = get_download_manager()
+    dm.clear_completed()
+    return {"status": "cleared"}

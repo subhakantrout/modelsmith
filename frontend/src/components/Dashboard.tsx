@@ -3,11 +3,15 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
 } from "recharts";
-import { usePipelineStore, useModelStore, useSystemStore } from "../stores";
+import { usePipelineStore, useModelStore, useSystemStore, useDownloadStore } from "../stores";
 import { api } from "../lib/api";
 import type { ModelRegistryItem } from "../types/api";
-import { ModelBrowser } from "./ModelBrowser";
-import { Download, Search, FolderOpen } from "lucide-react";
+import { HubSearch } from "./HubSearch";
+import {
+  Layers, Cpu, HardDrive, Radio, GitMerge,
+  Activity, AlertTriangle, CheckCircle, Zap, FileText,
+  ArrowRight, Box, Search, Download, FolderOpen, Menu,
+} from "lucide-react";
 
 interface DashboardProps {
   onOpenCanvas: () => void;
@@ -25,6 +29,13 @@ const TIER_COLORS: Record<number, string> = {
   1: "text-gray-400", 2: "text-cyan-400", 3: "text-yellow-400",
   4: "text-orange-400", 5: "text-red-400",
 };
+const TIER_BG: Record<number, string> = {
+  1: "bg-gray-500/20 border-gray-500/30",
+  2: "bg-cyan-500/10 border-cyan-500/30",
+  3: "bg-yellow-500/10 border-yellow-500/30",
+  4: "bg-orange-500/10 border-orange-500/30",
+  5: "bg-red-500/10 border-red-500/30",
+};
 
 function getHeatColor(score: number): string {
   if (score > 0.7) return "bg-red-500";
@@ -33,83 +44,41 @@ function getHeatColor(score: number): string {
   return "bg-green-500";
 }
 
+function StatCard({ icon: Icon, label, value, sub, color }: {
+  icon: any; label: string; value: string; sub?: string; color: string;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-gray-700/40 bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-4 hover:shadow-lg hover:shadow-black/20 hover:border-gray-600/60 transition-all duration-200 group">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-2xl font-bold tracking-tight text-gray-100">{value}</div>
+          <div className="text-[11px] text-gray-500 mt-0.5">{label}</div>
+          {sub && <div className="text-[10px] text-gray-600 mt-1">{sub}</div>}
+        </div>
+        <div className={`p-2 rounded-lg ${color} bg-opacity-20 group-hover:scale-110 transition-transform`}>
+          <Icon size={18} className="opacity-80" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Dashboard({ onOpenCanvas }: DashboardProps) {
   const nodes = usePipelineStore((s) => s.nodes);
   const clearPipeline = usePipelineStore((s) => s.clearPipeline);
   const inspectedModel = useModelStore((s) => s.inspectedModel);
   const systemInfo = useSystemStore((s) => s.info);
+  const { panelOpen, hubSearchOpen, setHubSearchOpen } = useDownloadStore();
   const [models, setModels] = useState<ModelRegistryItem[]>([]);
   const [layerData, setLayerData] = useState<any>(null);
   const [compareModelA, setCompareModelA] = useState("");
   const [compareModelB, setCompareModelB] = useState("");
   const [compareResult, setCompareResult] = useState<any>(null);
-  const [browserOpen, setBrowserOpen] = useState(false);
-  const [hubQuery, setHubQuery] = useState("");
-  const [hubResults, setHubResults] = useState<any[]>([]);
-  const [hubLoading, setHubLoading] = useState(false);
-  const [hubError, setHubError] = useState<string | null>(null);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState<{
-    status: string; progress: number; currentFile: string; filesDone: number; totalFiles: number;
-  } | null>(null);
 
   useEffect(() => {
     api.models.registry().then((r: any) => setModels(r.models)).catch(() => {});
     api.analyze.layers().then(setLayerData).catch(() => {});
   }, []);
-
-  const handleHubSearch = async () => {
-    if (!hubQuery.trim()) return;
-    setHubLoading(true);
-    setHubError(null);
-    try {
-      const r = await api.hub.search(hubQuery);
-      setHubResults(r.results || []);
-      if ((r.results || []).length === 0) setHubError("No models found");
-    } catch (err) {
-      setHubError((err as Error).message);
-      setHubResults([]);
-    }
-    setHubLoading(false);
-  };
-
-  const handleHubDownload = async (modelId: string) => {
-    setDownloadingId(modelId);
-    setHubError(null);
-    setDownloadProgress({ status: "starting", progress: 0, currentFile: "", filesDone: 0, totalFiles: 0 });
-    try {
-      const res = await api.hub.download(modelId);
-      const poll = setInterval(async () => {
-        try {
-          const s = await api.hub.downloadStatus(res.download_id);
-          if (s.status === "completed") {
-            clearInterval(poll);
-            setDownloadingId(null);
-            setDownloadProgress(null);
-            setHubError(`Downloaded ${modelId} to ${s.path}`);
-            api.models.registry().then((r: any) => setModels(r.models)).catch(() => {});
-          } else if (s.status === "error") {
-            clearInterval(poll);
-            setDownloadingId(null);
-            setDownloadProgress(null);
-            setHubError(`Download failed: ${s.error}`);
-          } else {
-            setDownloadProgress({
-              status: s.status,
-              progress: s.progress,
-              currentFile: s.current_file,
-              filesDone: s.files_done,
-              totalFiles: s.total_files,
-            });
-          }
-        } catch { clearInterval(poll); setDownloadingId(null); setDownloadProgress(null); }
-      }, 1000);
-    } catch (err) {
-      setDownloadingId(null);
-      setDownloadProgress(null);
-      setHubError(`Download failed: ${(err as Error).message}`);
-    }
-  };
 
   const modelLoaded = inspectedModel !== null;
   const ramGb = systemInfo?.specs.ram_total_gb ?? 0;
@@ -117,7 +86,7 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
   const tier = systemInfo?.tier ?? 0;
 
   const barData = models.slice(0, 8).map((m) => ({
-    name: m.name.length > 15 ? m.name.slice(0, 14) + "…" : m.name,
+    name: m.name.length > 14 ? m.name.slice(0, 13) + "…" : m.name,
     size: m.size_gb,
   }));
 
@@ -131,261 +100,251 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
   };
 
   return (
-    <div className="h-screen w-screen bg-gray-900 text-gray-100 flex flex-col">
-      <div className="flex items-center px-4 py-2 bg-gray-950 border-b border-gray-700">
-        <h1 className="text-lg font-bold text-blue-400">ModelSmith</h1>
-        <span className={`ml-3 text-xs font-mono ${TIER_COLORS[tier] || "text-gray-500"}`}>
-          Tier {tier}
-        </span>
+    <div className="h-screen w-screen bg-gray-925 text-gray-100 flex flex-col overflow-hidden">
+      {/* ── Header ── */}
+      <header className="shrink-0 flex items-center px-5 py-2.5 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800/60">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-900/30">
+            <Zap size={14} className="text-white" />
+          </div>
+          <span className="text-sm font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            ModelSmith
+          </span>
+          <span className={`ml-1 text-[10px] font-mono px-1.5 py-0.5 rounded border ${TIER_BG[tier] || "bg-gray-700/30 border-gray-600/30 text-gray-500"}`}>
+            T{tier}
+          </span>
+        </div>
         <div className="flex-1" />
-        <button onClick={() => setBrowserOpen(true)} className="px-3 py-1 text-xs font-medium bg-gray-700 text-gray-300 rounded hover:bg-gray-600 mr-2 flex items-center gap-1">
-          <FolderOpen size={12} /> Browse Models
-        </button>
-        <button onClick={onOpenCanvas} className="px-4 py-1 text-xs font-medium bg-blue-600 text-gray-100 rounded hover:bg-blue-500">
-          Open Canvas
-        </button>
-      </div>
-
-      <div className="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6 overflow-y-auto">
-        <h2 className="text-xl font-semibold text-gray-200">Dashboard</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <div className="text-2xl font-bold text-blue-400">{nodes.length}</div>
-            <div className="text-xs text-gray-400 mt-1">Pipeline Nodes</div>
-          </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <div className="text-2xl font-bold text-green-400">
-              {inspectedModel ? `${inspectedModel.size_gb}GB` : "—"}
-            </div>
-            <div className="text-xs text-gray-400 mt-1">Model Size</div>
-          </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <div className="text-2xl font-bold text-purple-400">{inspectedModel?.format || "—"}</div>
-            <div className="text-xs text-gray-400 mt-1">Format</div>
-          </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <div className="text-lg font-bold text-gray-200">{ramGb} GB RAM / {vramGb ? `${vramGb} GB VRAM` : "No GPU"}</div>
-            <div className="text-xs text-gray-400 mt-1">System Resources</div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-300 mb-3">Model Capabilities</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <RadarChart data={CAPABILITY_DATA}>
-                <PolarGrid stroke="#374151" />
-                <PolarAngleAxis dataKey="metric" tick={{ fill: "#9CA3AF", fontSize: 11 }} />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} />
-                <Radar dataKey="value" stroke="#60A5FA" fill="#60A5FA" fillOpacity={0.3} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-300 mb-3">
-              Local Models {models.length > 0 && <span className="text-gray-500">({models.length} found)</span>}
-            </h3>
-            {models.length === 0 ? (
-              <p className="text-xs text-gray-500 italic">Scanning common directories…</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={barData} layout="vertical" margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
-                  <XAxis type="number" tick={{ fill: "#9CA3AF", fontSize: 10 }} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fill: "#9CA3AF", fontSize: 10 }} />
-                  <Tooltip contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151", borderRadius: "6px", fontSize: "12px" }}
-                    formatter={(value: any) => [`${value} GB`, "Size"]} />
-                  <Bar dataKey="size" radius={[0, 3, 3, 0]}>
-                    {barData.map((_, i) => <Cell key={i} fill={i % 2 === 0 ? "#3B82F6" : "#6366F1"} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-1.5">
-            <Download size={14} className="text-blue-400" />
-            Download from HuggingFace Hub
-          </h3>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={hubQuery}
-              onChange={(e) => setHubQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleHubSearch()}
-              placeholder="Search models (e.g., 'Llama', 'Mistral')..."
-              className="flex-1 px-2 py-1 text-xs bg-gray-700 border border-gray-500 rounded text-gray-100 placeholder-gray-400"
-            />
-            <button
-              onClick={handleHubSearch}
-              disabled={hubLoading || !hubQuery.trim()}
-              className="px-3 py-1 text-xs bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50 flex items-center gap-1"
-            >
-              <Search size={11} /> {hubLoading ? "Searching..." : "Search"}
-            </button>
-          </div>
-          {hubError && (
-            <p className={`text-xs mb-2 ${hubError.startsWith("Downloaded") ? "text-green-400" : "text-red-400"}`}>{hubError}</p>
-          )}
-          {downloadProgress && downloadProgress.status === "downloading" && (
-            <div className="mb-2 bg-gray-750 border border-gray-700 rounded p-2 text-xs space-y-1">
-              <div className="flex justify-between text-gray-300">
-                <span>Downloading... {Math.round(downloadProgress.progress * 100)}%</span>
-                <span>{downloadProgress.filesDone}/{downloadProgress.totalFiles} files</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: `${downloadProgress.progress * 100}%` }} />
-              </div>
-              <div className="text-gray-500 truncate max-w-full">{downloadProgress.currentFile}</div>
-            </div>
-          )}
-          {hubResults.length > 0 && (
-            <div className="max-h-48 overflow-y-auto space-y-1 border border-gray-700 rounded p-1">
-              {hubResults.map((m) => (
-                <div key={m.id} className="flex items-center justify-between bg-gray-750 border border-gray-700 rounded p-2 text-xs hover:border-blue-500 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-gray-200 font-medium truncate">{m.id}</div>
-                    <div className="text-gray-500 flex gap-2">
-                      <span>{m.downloads?.toLocaleString()} downloads</span>
-                      {m.pipeline_tag && <span className="text-blue-400">{m.pipeline_tag}</span>}
-                    </div>
-                  </div>
-                    <button
-                    onClick={() => handleHubDownload(m.id)}
-                    disabled={downloadingId === m.id}
-                    className="shrink-0 px-2 py-1 text-xs rounded ml-2 flex items-center gap-1 disabled:opacity-50 disabled:cursor-wait bg-green-700 text-gray-200 hover:bg-green-600"
-                  >
-                    {downloadingId === m.id && downloadProgress ? (
-                      <span className="text-[10px]">{Math.round(downloadProgress.progress * 100)}%</span>
-                    ) : (
-                      <><Download size={10} /> Get</>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          {!hubLoading && hubResults.length === 0 && !hubError && (
-            <p className="text-xs text-gray-500 italic">Search HuggingFace Hub for models to download</p>
-          )}
-        </div>
-
-        {layerData && layerData.layers?.length > 0 && (
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-300 mb-2">
-              Layer Activation Heatmap
-              <span className="text-gray-500 ml-2">({layerData.total_layers} layers, {layerData.critical_layers} critical)</span>
-            </h3>
-            <div className="flex flex-wrap gap-1">
-              {layerData.layers.slice(0, 100).map((layer: any) => (
-                <div
-                  key={layer.index}
-                  className={`w-3 h-3 rounded-sm ${getHeatColor(layer.refusal_score)}`}
-                  title={`Layer ${layer.index}: refusal=${layer.refusal_score}, activation=${layer.activation_mean}`}
-                />
-              ))}
-            </div>
-            <div className="flex items-center gap-3 mt-2 text-[10px] text-gray-400">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-green-500" /> Low</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500" /> Med</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-yellow-500" /> High</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500" /> Critical</span>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-300 mb-2">Model Status</h3>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Loaded</span>
-                <span className={modelLoaded ? "text-green-400" : "text-gray-500"}>{modelLoaded ? "Yes" : "No"}</span>
-              </div>
-              {inspectedModel && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Path</span>
-                    <span className="text-gray-200 truncate ml-2 max-w-[200px]">{inspectedModel.path}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Filename</span>
-                    <span className="text-gray-200">{inspectedModel.filename}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Valid</span>
-                    <span className={inspectedModel.valid ? "text-green-400" : "text-red-400"}>{inspectedModel.valid ? "Yes" : "No"}</span>
-                  </div>
-                </>
-              )}
-              {!inspectedModel && <p className="text-gray-500 italic pt-2">No model loaded. Load one from the canvas.</p>}
-            </div>
-          </div>
-
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-300 mb-2">Compare Models</h3>
-            <div className="space-y-2 text-xs">
-              <select value={compareModelA} onChange={(e) => setCompareModelA(e.target.value)}
-                className="w-full px-2 py-1 bg-gray-700 border border-gray-500 rounded text-gray-100">
-                <option value="">Select model A…</option>
-                {models.map((m) => <option key={m.path} value={m.path}>{m.name} ({m.size_gb}GB)</option>)}
-              </select>
-              <select value={compareModelB} onChange={(e) => setCompareModelB(e.target.value)}
-                className="w-full px-2 py-1 bg-gray-700 border border-gray-500 rounded text-gray-100">
-                <option value="">Select model B…</option>
-                {models.map((m) => <option key={m.path} value={m.path}>{m.name} ({m.size_gb}GB)</option>)}
-              </select>
-              <button onClick={handleCompare} disabled={!compareModelA || !compareModelB}
-                className="w-full px-3 py-1 text-xs font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50">
-                Compare
-              </button>
-              {compareResult && (
-                <div className="bg-gray-700 rounded p-2 space-y-1">
-                  <div className="flex justify-between"><span>A size</span><span>{compareResult.model_a.size_gb} GB</span></div>
-                  <div className="flex justify-between"><span>B size</span><span>{compareResult.model_b.size_gb} GB</span></div>
-                  <div className="flex justify-between"><span>Size delta</span><span>{compareResult.differences.size_delta_gb} GB</span></div>
-                  <div className="flex justify-between"><span>Same format</span><span>{compareResult.differences.same_format ? "Yes" : "No"}</span></div>
-                  <div className="flex justify-between"><span>A efficiency</span><span>{compareResult.model_a.efficiency_score}/100</span></div>
-                  <div className="flex justify-between"><span>B efficiency</span><span>{compareResult.model_b.efficiency_score}/100</span></div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {nodes.length > 0 && (
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-300 mb-2">Pipeline Steps</h3>
-            <div className="space-y-1">
-              {nodes.map((node, idx) => (
-                <div key={node.id} className="flex items-center gap-2 text-xs text-gray-400">
-                  <span className="text-gray-500">{idx + 1}.</span>
-                  <span className="text-gray-200">{node.data.label}</span>
-                  <span className={`ml-auto ${node.data.status === "done" ? "text-green-400" : node.data.status === "error" ? "text-red-400" : node.data.status === "running" ? "text-blue-400" : "text-gray-500"}`}>
-                    {node.data.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {nodes.length > 0 && (
-          <button onClick={clearPipeline} className="px-4 py-2 text-xs font-medium bg-red-700 text-gray-200 rounded hover:bg-red-600">
-            Clear Pipeline
+        <nav className="flex items-center gap-1.5">
+          <button
+            onClick={() => setHubSearchOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium bg-gradient-to-r from-indigo-600/80 to-indigo-500/80 text-gray-100 rounded-lg hover:from-indigo-500 hover:to-indigo-400 transition-all shadow-lg shadow-indigo-900/20"
+          >
+            <Download size={12} /> Hub
           </button>
-        )}
+          <button
+            onClick={onOpenCanvas}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium bg-gradient-to-r from-blue-600/80 to-blue-500/80 text-gray-100 rounded-lg hover:from-blue-500 hover:to-blue-400 transition-all shadow-lg shadow-blue-900/20"
+          >
+            <Box size={12} /> Canvas
+          </button>
+        </nav>
+      </header>
+
+      {/* ── Scrollable content ── */}
+      <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="max-w-5xl mx-auto space-y-5">
+
+          {/* Welcome row */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold text-gray-100">Dashboard</h1>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                {models.length} local model{models.length !== 1 ? "s" : ""}
+                {nodes.length > 0 && ` · ${nodes.length} pipeline step${nodes.length !== 1 ? "s" : ""}`}
+                {systemInfo?.specs.gpu_name && ` · ${systemInfo.specs.gpu_name}`}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Stats row ── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatCard icon={Box} label="Pipeline Nodes" value={String(nodes.length)} color="bg-blue-500/20 text-blue-400" />
+            <StatCard icon={HardDrive} label="Model Size" value={inspectedModel ? `${inspectedModel.size_gb}GB` : "—"} color="bg-green-500/20 text-green-400" />
+            <StatCard icon={FileText} label="Format" value={inspectedModel?.format || "—"} color="bg-purple-500/20 text-purple-400" />
+            <StatCard
+              icon={Cpu}
+              label="System"
+              value={`${ramGb}GB`}
+              sub={vramGb ? `${vramGb}GB VRAM` : "No GPU"}
+              color="bg-amber-500/20 text-amber-400"
+            />
+          </div>
+
+          {/* ── Charts row ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-gray-700/30 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-4 hover:shadow-lg hover:shadow-black/10 transition-shadow">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3 flex items-center gap-1.5">
+                <Activity size={13} className="text-blue-400" /> Model Capabilities
+              </h3>
+              <ResponsiveContainer width="100%" height={210}>
+                <RadarChart data={CAPABILITY_DATA}>
+                  <PolarGrid stroke="#374151" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fill: "#9CA3AF", fontSize: 11 }} />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} />
+                  <Radar dataKey="value" stroke="#60A5FA" fill="#60A5FA" fillOpacity={0.25} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="rounded-xl border border-gray-700/30 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-4 hover:shadow-lg hover:shadow-black/10 transition-shadow">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3 flex items-center gap-1.5">
+                <HardDrive size={13} className="text-green-400" />
+                Local Models
+                {models.length > 0 && <span className="text-gray-600 font-normal">({models.length})</span>}
+              </h3>
+              {models.length === 0 ? (
+                <div className="flex items-center justify-center h-[210px] text-xs text-gray-600 italic">
+                  <div className="text-center space-y-2">
+                    <Download size={24} className="mx-auto text-gray-700" />
+                    <p>No models found</p>
+                    <button
+                      onClick={() => setHubSearchOpen(true)}
+                      className="px-3 py-1.5 text-[11px] bg-indigo-600/80 text-gray-100 rounded-lg hover:bg-indigo-500 transition-colors inline-flex items-center gap-1"
+                    >
+                      <Search size={10} /> Search Hub
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={210}>
+                  <BarChart data={barData} layout="vertical" margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
+                    <XAxis type="number" tick={{ fill: "#9CA3AF", fontSize: 10 }} />
+                    <YAxis type="category" dataKey="name" width={90} tick={{ fill: "#9CA3AF", fontSize: 10 }} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151", borderRadius: "8px", fontSize: "12px" }}
+                      formatter={(value: any) => [`${value} GB`, "Size"]}
+                    />
+                    <Bar dataKey="size" radius={[0, 3, 3, 0]}>
+                      {barData.map((_, i) => <Cell key={i} fill={i % 2 === 0 ? "#3B82F6" : "#6366F1"} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          {/* ── Layer Heatmap ── */}
+          {layerData && layerData.layers?.length > 0 && (
+            <div className="rounded-xl border border-gray-700/30 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-4 hover:shadow-lg hover:shadow-black/10 transition-shadow">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3 flex items-center gap-1.5">
+                <Layers size={13} className="text-purple-400" />
+                Layer Activation Heatmap
+                <span className="text-gray-600 font-normal">({layerData.total_layers} layers, {layerData.critical_layers} critical)</span>
+              </h3>
+              <div className="flex flex-wrap gap-1">
+                {layerData.layers.slice(0, 100).map((layer: any) => (
+                  <div
+                    key={layer.index}
+                    className={`w-3 h-3 rounded-sm ${getHeatColor(layer.refusal_score)}`}
+                    title={`Layer ${layer.index}: refusal=${layer.refusal_score}, activation=${layer.activation_mean}`}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-3 mt-2.5 text-[10px] text-gray-500">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-green-500" /> Low</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500" /> Med</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-yellow-500" /> High</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500" /> Critical</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── Bottom grid ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-gray-700/30 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-4 hover:shadow-lg hover:shadow-black/10 transition-shadow">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3 flex items-center gap-1.5">
+                <CheckCircle size={13} className="text-green-400" /> Model Status
+              </h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center py-1.5 border-b border-gray-700/20">
+                  <span className="text-gray-500">Loaded</span>
+                  <span className={modelLoaded ? "text-green-400 font-medium" : "text-gray-600"}>{modelLoaded ? "Yes" : "No"}</span>
+                </div>
+                {inspectedModel && (
+                  <>
+                    <div className="flex justify-between items-center py-1.5 border-b border-gray-700/20">
+                      <span className="text-gray-500">Path</span>
+                      <span className="text-gray-300 truncate ml-4 max-w-[220px] text-right">{inspectedModel.path}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5 border-b border-gray-700/20">
+                      <span className="text-gray-500">File</span>
+                      <span className="text-gray-300">{inspectedModel.filename}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5">
+                      <span className="text-gray-500">Valid</span>
+                      <span className={inspectedModel.valid ? "text-green-400" : "text-red-400"}>{inspectedModel.valid ? "Yes" : "No"}</span>
+                    </div>
+                  </>
+                )}
+                {!inspectedModel && <p className="text-gray-600 italic pt-2">No model loaded. Load one from the Canvas.</p>}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-700/30 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-4 hover:shadow-lg hover:shadow-black/10 transition-shadow">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3 flex items-center gap-1.5">
+                <GitMerge size={13} className="text-indigo-400" /> Compare Models
+              </h3>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={compareModelA} onChange={(e) => setCompareModelA(e.target.value)}
+                    className="px-2 py-1.5 text-xs bg-gray-800 border border-gray-600/50 rounded-lg text-gray-200 focus:outline-none focus:border-blue-500/50">
+                    <option value="">Model A…</option>
+                    {models.map((m) => <option key={m.path} value={m.path}>{m.name}</option>)}
+                  </select>
+                  <select value={compareModelB} onChange={(e) => setCompareModelB(e.target.value)}
+                    className="px-2 py-1.5 text-xs bg-gray-800 border border-gray-600/50 rounded-lg text-gray-200 focus:outline-none focus:border-blue-500/50">
+                    <option value="">Model B…</option>
+                    {models.map((m) => <option key={m.path} value={m.path}>{m.name}</option>)}
+                  </select>
+                </div>
+                <button onClick={handleCompare} disabled={!compareModelA || !compareModelB}
+                  className="w-full py-1.5 text-xs font-medium bg-gradient-to-r from-indigo-600 to-indigo-500 text-gray-100 rounded-lg hover:from-indigo-500 hover:to-indigo-400 disabled:opacity-50 transition-all flex items-center justify-center gap-1">
+                  <GitMerge size={11} /> Compare
+                </button>
+                {compareResult && (
+                  <div className="bg-gray-800/60 rounded-lg p-2.5 space-y-1.5 text-xs border border-gray-700/30">
+                    <div className="flex justify-between"><span className="text-gray-500">A size</span><span>{compareResult.model_a.size_gb} GB</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">B size</span><span>{compareResult.model_b.size_gb} GB</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">Delta</span><span>{compareResult.differences.size_delta_gb} GB</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">Same format</span><span>{compareResult.differences.same_format ? "Yes" : "No"}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">A efficiency</span><span>{compareResult.model_a.efficiency_score}/100</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">B efficiency</span><span>{compareResult.model_b.efficiency_score}/100</span></div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Pipeline Steps ── */}
+          {nodes.length > 0 && (
+            <div className="rounded-xl border border-gray-700/30 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-4 hover:shadow-lg hover:shadow-black/10 transition-shadow">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3 flex items-center gap-1.5">
+                <Radio size={13} className="text-cyan-400" /> Pipeline Steps
+              </h3>
+              <div className="space-y-1">
+                {nodes.map((node, idx) => (
+                  <div key={node.id} className="flex items-center gap-2.5 text-xs py-1.5 px-2 rounded-lg hover:bg-gray-800/40 transition-colors">
+                    <span className="text-gray-600 w-5 text-right">{idx + 1}.</span>
+                    <span className="text-gray-200">{node.data.label}</span>
+                    <span className={`ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                      node.data.status === "done" ? "bg-green-900/30 text-green-400" :
+                      node.data.status === "error" ? "bg-red-900/30 text-red-400" :
+                      node.data.status === "running" ? "bg-blue-900/30 text-blue-400" :
+                      "bg-gray-800 text-gray-500"
+                    }`}>
+                      {node.data.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Actions ── */}
+          {nodes.length > 0 && (
+            <div className="flex gap-2 pb-4">
+              <button onClick={clearPipeline}
+                className="px-4 py-1.5 text-xs font-medium bg-gradient-to-r from-red-700 to-red-600 text-gray-200 rounded-lg hover:from-red-600 hover:to-red-500 transition-all flex items-center gap-1.5 shadow-lg shadow-red-900/20">
+                <AlertTriangle size={11} /> Clear Pipeline
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {browserOpen && (
-        <ModelBrowser
-          onSelect={(path) => { setBrowserOpen(false); }}
-          onClose={() => setBrowserOpen(false)}
-        />
-      )}
+      {/* ── HubSearch modal ── */}
+      {hubSearchOpen && <HubSearch onClose={() => setHubSearchOpen(false)} />}
     </div>
   );
 }
