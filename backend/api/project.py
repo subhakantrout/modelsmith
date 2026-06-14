@@ -5,6 +5,7 @@ from backend.core.project_manager import (
     list_projects, save_project, load_project, delete_project,
     export_recipe, import_recipe, list_recipes,
 )
+from backend.core.security import resolve_model_path
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -57,7 +58,8 @@ class ImportRecipeRequest(BaseModel):
 @router.post("/import-recipe")
 async def import_recipe_endpoint(req: ImportRecipeRequest):
     try:
-        return import_recipe(req.path)
+        safe_path = resolve_model_path(req.path)
+        return import_recipe(safe_path)
     except (FileNotFoundError, ValueError) as e:
         raise HTTPException(status_code=400, detail=str(e))
 

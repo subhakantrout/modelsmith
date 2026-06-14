@@ -10,6 +10,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { usePipelineStore, useToastStore } from "../stores";
+import { useKeyboard } from "../lib/useKeyboard";
 import { ImportRecipeModal } from "./ImportRecipeModal";
 import {
   ModelInputNode,
@@ -160,6 +161,18 @@ export function PipelineCanvas() {
       addToast(`Import failed: ${(err as Error).message}`, "error");
     }
   }, [setPipelineName, addToast]);
+
+  const removeSelectedNode = useCallback(() => {
+    if (selectedNodeId) {
+      usePipelineStore.getState().removeNode(selectedNodeId);
+    }
+  }, [selectedNodeId]);
+
+  useKeyboard([
+    { key: "s", ctrl: true, handler: handleSave },
+    { key: "Delete", handler: removeSelectedNode },
+    { key: "Backspace", handler: removeSelectedNode },
+  ], !showImportModal);
 
   const selectedNode = useMemo(
     () => nodes.find((n) => n.id === selectedNodeId) || null,

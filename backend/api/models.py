@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from backend.core.model_manager import get_manager
 from backend.core.system import detect_hardware, get_tier
+from backend.core.security import validate_path_exists, resolve_model_path
 import asyncio
 
 router = APIRouter(prefix="/api/models", tags=["models"])
@@ -19,7 +20,8 @@ async def load_model(req: LoadModelRequest):
     tier = get_tier(specs["ram_total_gb"], specs.get("gpu_vram_gb"))
     mgr = get_manager()
     try:
-        result = await asyncio.to_thread(mgr.load, req.path, tier, req.model_size_billions)
+        safe_path = validate_path_exists(req.path)
+        result = await asyncio.to_thread(mgr.load, safe_path, tier, req.model_size_billions)
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -35,7 +37,10 @@ class ModelInspectRequest(BaseModel):
 async def inspect_model(req: ModelInspectRequest):
     from backend.core.model_loader import get_model_info
     try:
-        return get_model_info(req.path)
+        safe_path = validate_path_exists(req.path)
+        return get_model_info(safe_path)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Model path not found")
 
@@ -81,7 +86,10 @@ async def model_summary():
 async def scan_directory(path: str):
     from backend.core.model_registry import scan_directory
     try:
-        return {"models": scan_directory(path)}
+        safe_path = resolve_model_path(path)
+        return {"models": scan_directory(safe_path)}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Directory not found")
 

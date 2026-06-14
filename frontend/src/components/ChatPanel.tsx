@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useChatStore, useModelStore } from "../stores";
+import { Markdown } from "./Markdown";
 
 interface ChatPanelProps {
   onClose: () => void;
@@ -50,7 +51,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className={`${msg.role === "user" ? "text-right" : ""}`}>
-            <div className={`inline-block max-w-[85%] rounded-lg px-3 py-2 text-xs ${msg.role === "user" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-200 border border-gray-700"}`}>{msg.content}</div>
+            <div className={`inline-block max-w-[85%] rounded-lg px-3 py-2 text-xs ${msg.role === "user" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-200 border border-gray-700"}`}>{msg.role === "assistant" ? <Markdown content={msg.content} /> : msg.content}</div>
           </div>
         ))}
         {generating && (
