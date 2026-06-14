@@ -1,9 +1,9 @@
 # ModelSmith — Agent Context
 
 ## Stack
-- **Backend**: Python 3.13, FastAPI, Uvicorn, Pydantic v2
+- **Backend**: Python 3.12+, FastAPI, Uvicorn, Pydantic v2
 - **Frontend**: React 19, TypeScript 6.0, Vite 8, @xyflow/react (ReactFlow), Tailwind CSS 4, Zustand 5, Lucide icons
-- **ML**: transformers, PyTorch 2.5, bitsandbytes, accelerate, mergekit, PEFT, safetensors, huggingface_hub
+- **ML**: transformers, PyTorch 2.12+, bitsandbytes, accelerate, mergekit, PEFT, safetensors, huggingface_hub
 - **System**: psutil, nvidia-ml-py, httpx
 
 ## Running

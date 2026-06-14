@@ -60,7 +60,7 @@ Key patterns:
 - GPU tests: CUDA-aware (expected values differ when GPU unavailable)
 
 ## Environment
-- Python 3.13
+- Python 3.12+
 - Virtual env: `.venv/`
 - Dependencies: See `backend/requirements.txt` (generated via pip freeze)
 - Port: 8765

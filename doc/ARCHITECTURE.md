@@ -6,11 +6,11 @@ ModelSmith is a desktop application for downloading, managing, and transforming 
 ## Stack
 | Layer | Technology |
 |-------|-----------|
-| Backend | Python 3.13, FastAPI, Uvicorn |
+| Backend | Python 3.12+, FastAPI, Uvicorn |
 | Frontend | React 19, TypeScript 6.0, Vite 8 |
 | UI | Tailwind CSS 4, @xyflow/react (ReactFlow), Lucide icons |
 | State | Zustand 5 |
-| ML | transformers, PyTorch 2.5, bitsandbytes, accelerate, mergekit, PEFT, safetensors |
+| ML | transformers, PyTorch 2.12+, bitsandbytes, accelerate, mergekit, PEFT, safetensors |
 | System | psutil, huggingface_hub, httpx |
 
 ## Ports
@@ -39,7 +39,7 @@ modelsmith/
       model_manager.py
       model_merger.py
       compressor.py
-      kc_compress.py
+      kv_compress.py
       analyzer.py
       abliterator.py
       lora_manager.py

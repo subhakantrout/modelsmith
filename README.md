@@ -106,7 +106,7 @@ Download a LoRA adapter from HuggingFace, point ModelSmith at it, and fuse it pe
 
 ### Prerequisites
 
-- Python 3.10+, Node.js 18+, npm 9+
+- Python 3.12+, Node.js 20+, npm 9+
 - (Optional) NVIDIA GPU with CUDA 12+
 
 ```bash
@@ -115,12 +115,9 @@ git clone https://github.com/subhakantrout/modelsmith.git
 cd modelsmith
 
 # Backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r backend/requirements.txt
-
-# Optional — for downloading models from HuggingFace Hub
-pip install huggingface_hub
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
 
 # Frontend
 cd frontend && npm install && cd ..
@@ -174,7 +171,7 @@ Open **http://localhost:5173** 🎉
 ## 🧪 Testing
 
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 python -m pytest backend/tests/ -v          # All 143 tests
 python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 ```
@@ -247,8 +244,8 @@ python -m pytest backend/tests/ -v
 | Layer | Technologies |
 |-------|-------------|
 | **Frontend** | React 19, TypeScript 6.0, Vite 8, @xyflow/react, Tailwind CSS 4, Zustand 5, Lucide |
-| **Backend** | Python 3.13, FastAPI, Uvicorn, Pydantic v2 |
-| **ML Engine** | transformers, PyTorch 2.5 (CUDA 12.4), bitsandbytes, accelerate |
+| **Backend** | Python 3.12+, FastAPI, Uvicorn, Pydantic v2 |
+| **ML Engine** | transformers, PyTorch 2.12 (CUDA 12.4+), bitsandbytes, accelerate |
 | **Model Ops** | mergekit, PEFT, safetensors |
 | **System** | psutil, nvidia-ml-py |
 | **Quantization** | llama.cpp (GGUF), bitsandbytes (NF4/FP4) |
@@ -278,7 +275,6 @@ python -m pytest backend/tests/ -v
 | `POST` | `/api/models/hub-download-cancel/{id}` | ⛔ Cancel download |
 | `POST` | `/api/models/hub-download-retry/{id}` | 🔄 Retry failed download |
 | `POST` | `/api/models/hub-download-clear` | 🧹 Clear completed/failed |
-| `POST` | `/api/analyze/refusal` | 🔬 Refusal score for text |
 | `POST` | `/api/analyze/refusal` | 🔬 Refusal score for text |
 | `POST` | `/api/abliterate/find-direction` | 🧭 Find refusal vector |
 | `POST` | `/api/abliterate/apply` | ✂️ Apply ablation |

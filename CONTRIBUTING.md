@@ -32,7 +32,7 @@ make test-cov   # with coverage report
 
 ## Code Style
 
-- **Backend**: Python 3.10+, type hints required, follow existing patterns
+- **Backend**: Python 3.12+, type hints required, follow existing patterns
 - **Frontend**: TypeScript strict mode, Zustand for state, Tailwind v4 for styling
 - **Logging**: Use named loggers (`logging.getLogger("modelsmith.module_name")`)
 - **Errors**: Raise `HTTPException` in API routes, standard exceptions in core

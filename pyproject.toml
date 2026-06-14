@@ -39,8 +39,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/modelsmith/modelsmith"
-Source = "https://github.com/modelsmith/modelsmith"
+Homepage = "https://github.com/subhakantrout/modelsmith"
+Source = "https://github.com/subhakantrout/modelsmith"
 
 [tool.setuptools.packages.find]
 include = ["backend*"]
