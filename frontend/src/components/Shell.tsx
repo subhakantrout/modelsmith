@@ -7,6 +7,7 @@ import { CanvasView } from "./CanvasView";
 import { ModelsView } from "./ModelsView";
 import { ChatView } from "./ChatView";
 import { SettingsView } from "./SettingsView";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { useViewStore } from "../stores/viewStore";
 
 const VIEWS: Record<string, React.FC> = {
@@ -28,7 +29,9 @@ export function Shell() {
         <TopBar />
         <div className="flex-1 flex min-h-0">
           <div className="flex-1 min-w-0">
-            <ViewComponent />
+            <ErrorBoundary key={currentView}>
+              <ViewComponent />
+            </ErrorBoundary>
           </div>
           <RightPanel />
         </div>
