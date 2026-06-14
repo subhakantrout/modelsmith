@@ -9,7 +9,7 @@ import {
   type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { usePipelineStore, useToastStore } from "../stores";
+import { usePipelineStore, useToastStore, useSystemStore } from "../stores";
 import { useKeyboard } from "../lib/useKeyboard";
 import { ImportRecipeModal } from "./ImportRecipeModal";
 import {
@@ -60,6 +60,7 @@ export function PipelineCanvas() {
   const pipelineName = usePipelineStore((s) => s.pipelineName);
   const saveCurrentProject = usePipelineStore((s) => s.saveCurrentProject);
   const addToast = useToastStore((s) => s.addToast);
+  const systemInfo = useSystemStore((s) => s.info);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -104,7 +105,7 @@ export function PipelineCanvas() {
   const handleDryRun = useCallback(async () => {
     if (nodes.length === 0) return;
     try {
-      const result = await dryRunPipeline();
+      const result = await dryRunPipeline(systemInfo || undefined);
       if (result.valid) {
         addToast(`Pipeline valid: ${result.steps_validated} steps`, "success");
       } else {
@@ -114,7 +115,7 @@ export function PipelineCanvas() {
     } catch (err) {
       addToast(`Dry run failed: ${(err as Error).message}`, "error");
     }
-  }, [nodes, addToast]);
+  }, [nodes, systemInfo, addToast]);
 
   const handleExportRecipe = useCallback(async () => {
     const id = pipelineName.toLowerCase().replace(/\s+/g, "-");
