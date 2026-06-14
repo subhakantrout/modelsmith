@@ -6,6 +6,8 @@ import {
 import { usePipelineStore, useModelStore, useSystemStore } from "../stores";
 import { api } from "../lib/api";
 import type { ModelRegistryItem } from "../types/api";
+import { ModelBrowser } from "./ModelBrowser";
+import { Download, Search, FolderOpen } from "lucide-react";
 
 interface DashboardProps {
   onOpenCanvas: () => void;
@@ -41,11 +43,45 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
   const [compareModelA, setCompareModelA] = useState("");
   const [compareModelB, setCompareModelB] = useState("");
   const [compareResult, setCompareResult] = useState<any>(null);
+  const [browserOpen, setBrowserOpen] = useState(false);
+  const [hubQuery, setHubQuery] = useState("");
+  const [hubResults, setHubResults] = useState<any[]>([]);
+  const [hubLoading, setHubLoading] = useState(false);
+  const [hubError, setHubError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     api.models.registry().then((r: any) => setModels(r.models)).catch(() => {});
     api.analyze.layers().then(setLayerData).catch(() => {});
   }, []);
+
+  const handleHubSearch = async () => {
+    if (!hubQuery.trim()) return;
+    setHubLoading(true);
+    setHubError(null);
+    try {
+      const r = await api.hub.search(hubQuery);
+      setHubResults(r.results || []);
+      if ((r.results || []).length === 0) setHubError("No models found");
+    } catch (err) {
+      setHubError((err as Error).message);
+      setHubResults([]);
+    }
+    setHubLoading(false);
+  };
+
+  const handleHubDownload = async (modelId: string) => {
+    setDownloadingId(modelId);
+    setHubError(null);
+    try {
+      const res = await api.hub.download(modelId);
+      setHubError(`Downloaded ${modelId} to ${res.path}`);
+      api.models.registry().then((r: any) => setModels(r.models)).catch(() => {});
+    } catch (err) {
+      setHubError(`Download failed: ${(err as Error).message}`);
+    }
+    setDownloadingId(null);
+  };
 
   const modelLoaded = inspectedModel !== null;
   const ramGb = systemInfo?.specs.ram_total_gb ?? 0;
@@ -74,6 +110,9 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
           Tier {tier}
         </span>
         <div className="flex-1" />
+        <button onClick={() => setBrowserOpen(true)} className="px-3 py-1 text-xs font-medium bg-gray-700 text-gray-300 rounded hover:bg-gray-600 mr-2 flex items-center gap-1">
+          <FolderOpen size={12} /> Browse Models
+        </button>
         <button onClick={onOpenCanvas} className="px-4 py-1 text-xs font-medium bg-blue-600 text-gray-100 rounded hover:bg-blue-500">
           Open Canvas
         </button>
@@ -136,6 +175,62 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
               </ResponsiveContainer>
             )}
           </div>
+        </div>
+
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-1.5">
+            <Download size={14} className="text-blue-400" />
+            Download from HuggingFace Hub
+          </h3>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={hubQuery}
+              onChange={(e) => setHubQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleHubSearch()}
+              placeholder="Search models (e.g., 'Llama', 'Mistral')..."
+              className="flex-1 px-2 py-1 text-xs bg-gray-700 border border-gray-500 rounded text-gray-100 placeholder-gray-400"
+            />
+            <button
+              onClick={handleHubSearch}
+              disabled={hubLoading || !hubQuery.trim()}
+              className="px-3 py-1 text-xs bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50 flex items-center gap-1"
+            >
+              <Search size={11} /> {hubLoading ? "Searching..." : "Search"}
+            </button>
+          </div>
+          {hubError && (
+            <p className={`text-xs mb-2 ${hubError.startsWith("Downloaded") ? "text-green-400" : "text-red-400"}`}>{hubError}</p>
+          )}
+          {hubResults.length > 0 && (
+            <div className="max-h-48 overflow-y-auto space-y-1 border border-gray-700 rounded p-1">
+              {hubResults.map((m) => (
+                <div key={m.id} className="flex items-center justify-between bg-gray-750 border border-gray-700 rounded p-2 text-xs hover:border-blue-500 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-gray-200 font-medium truncate">{m.id}</div>
+                    <div className="text-gray-500 flex gap-2">
+                      <span>{m.downloads?.toLocaleString()} downloads</span>
+                      {m.pipeline_tag && <span className="text-blue-400">{m.pipeline_tag}</span>}
+                    </div>
+                  </div>
+                    <button
+                    onClick={() => handleHubDownload(m.id)}
+                    disabled={downloadingId === m.id}
+                    className="shrink-0 px-2 py-1 text-xs rounded ml-2 flex items-center gap-1 disabled:opacity-50 disabled:cursor-wait bg-green-700 text-gray-200 hover:bg-green-600"
+                  >
+                    {downloadingId === m.id ? (
+                      <><svg className="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Downloading...</>
+                    ) : (
+                      <><Download size={10} /> Get</>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {!hubLoading && hubResults.length === 0 && !hubError && (
+            <p className="text-xs text-gray-500 italic">Search HuggingFace Hub for models to download</p>
+          )}
         </div>
 
         {layerData && layerData.layers?.length > 0 && (
@@ -244,6 +339,13 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
           </button>
         )}
       </div>
+
+      {browserOpen && (
+        <ModelBrowser
+          onSelect={(path) => { setBrowserOpen(false); }}
+          onClose={() => setBrowserOpen(false)}
+        />
+      )}
     </div>
   );
 }

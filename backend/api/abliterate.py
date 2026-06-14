@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
+from backend.core.model_manager import get_manager
 from backend.core.abliterator import (
     find_refusal_direction, apply_abliteration, remove_abliteration,
     get_abliteration_status, detect_model_family, REFUSAL_LAYERS,
@@ -65,7 +66,6 @@ async def status():
 
 @router.get("/layers")
 async def layers():
-    from backend.core.model_manager import get_manager
     from backend.core.abliterator import detect_model_family, find_num_layers
     mgr = get_manager()
     if not mgr.is_loaded:
@@ -77,4 +77,34 @@ async def layers():
         "model_family": model_family,
         "num_layers": num_layers,
         "suggested_range": layer_range,
+    }
+
+
+class ValidateRequest(BaseModel):
+    model_path: str = ""
+    layers: str = "all"
+    method: str = "direction_ablation"
+    model_size_gb: float = 7.0
+
+
+@router.post("/validate")
+async def validate(req: ValidateRequest):
+    errors = []
+    if req.method not in ["direction_ablation", "weight_pruning"]:
+        errors.append(f"Unknown method: {req.method}")
+    mgr = get_manager()
+    if not mgr.is_loaded:
+        errors.append("No model loaded")
+    return {
+        "validation": {
+            "valid": len(errors) == 0,
+            "method": req.method,
+            "layers": req.layers,
+            "error": errors[0] if errors else None,
+        },
+        "estimate": {
+            "estimated_minutes": int(req.model_size_gb * 3),
+            "method": req.method,
+            "model_size_gb": req.model_size_gb,
+        } if not errors else None,
     }

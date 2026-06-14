@@ -91,3 +91,29 @@ async def tier_info():
     specs = detect_hardware()
     tier = get_tier(specs["ram_total_gb"], specs.get("gpu_vram_gb"))
     return {"tier": tier, "hardware": specs}
+
+
+@router.get("/hub-search")
+async def hub_search(query: str, limit: int = 20):
+    from backend.core.model_registry import search_hub
+    try:
+        results = search_hub(query, limit)
+        return {"results": results}
+    except RuntimeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+class HubDownloadRequest(BaseModel):
+    model_id: str
+    output_dir: str = ""
+    token: Optional[str] = None
+
+
+@router.post("/hub-download")
+async def hub_download(req: HubDownloadRequest):
+    from backend.core.model_registry import download_from_hub
+    try:
+        result = download_from_hub(req.model_id, req.output_dir, req.token)
+        return result
+    except RuntimeError as e:
+        raise HTTPException(status_code=400, detail=str(e))

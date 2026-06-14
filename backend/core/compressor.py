@@ -35,6 +35,7 @@ def get_available_quants() -> list[dict]:
 
 
 def estimate_gguf_quant_size(original_gb: float, quant_id: str) -> dict:
+    quant_id = quant_id.lower()
     quant = GGUF_QUANTS.get(quant_id)
     if not quant:
         raise ValueError(f"Unknown quant: {quant_id}")
@@ -120,12 +121,46 @@ def run_quantization(
 def prune_layers(model, layers_to_keep: list[int]) -> dict:
     logger.info(f"Pruning model to keep layers: {layers_to_keep}")
     try:
-        new_layers = model.model.layers.__class__()
+        from backend.core.abliterator import detect_model_family
+        model_family = detect_model_family(model)
+        
+        attr_map = {
+            "llama": "model.layers",
+            "mistral": "model.layers",
+            "gemma": "model.layers",
+            "qwen2": "model.layers",
+            "falcon": "model.transformer.h",
+            "opt": "model.decoder.layers",
+        }
+        attr_path = attr_map.get(model_family, "model.layers")
+        
+        # Resolve the layer container
+        obj = model
+        parts = attr_path.split(".")
+        for part in parts[:-1]:
+            obj = getattr(obj, part)
+        
+        layer_container = getattr(obj, parts[-1])
+        new_layers = layer_container.__class__()
         for i in layers_to_keep:
-            new_layers.append(model.model.layers[i])
-        original = model.config.num_hidden_layers
-        model.model.layers = new_layers
-        model.config.num_hidden_layers = len(layers_to_keep)
+            new_layers.append(layer_container[i])
+            
+        setattr(obj, parts[-1], new_layers)
+        
+        # Update config counts
+        original = 0
+        for attr in ["config.num_hidden_layers", "config.num_layers", "config.n_layer"]:
+            try:
+                parts = attr.split(".")
+                cfg_obj = model
+                for part in parts[:-1]:
+                    cfg_obj = getattr(cfg_obj, part)
+                original = getattr(cfg_obj, parts[-1])
+                setattr(cfg_obj, parts[-1], len(layers_to_keep))
+                break
+            except AttributeError:
+                continue
+                
         return {
             "status": "pruned",
             "original_layers": original,

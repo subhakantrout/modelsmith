@@ -28,7 +28,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   const lastAssistantMessage = messages.filter((m) => m.role === "assistant").pop();
 
   return (
-    <div className="w-96 border-l border-gray-700 bg-gray-900 flex flex-col h-full">
+    <div className="w-72 sm:w-80 lg:w-96 border-l border-gray-700 bg-gray-900 flex flex-col h-full shrink-0">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
         <h3 className="text-sm font-medium text-gray-100">Chat Test</h3>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-200 text-lg leading-none">×</button>

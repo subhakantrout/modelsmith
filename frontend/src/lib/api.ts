@@ -57,6 +57,8 @@ export const api = {
     loaded: () => request<{ loaded: boolean; model: any; memory: any }>("/models/loaded"),
     registry: () => request<{ models: ModelRegistryItem[] }>("/models/registry"),
     summary: () => request<ModelSummary>("/models/summary"),
+    scan_directory: (path: string) =>
+      request<{ models: ModelRegistryItem[] }>(`/models/scan?path=${encodeURIComponent(path)}`, { method: "POST" }),
   },
 
   chat: {
@@ -231,6 +233,16 @@ export const api = {
         body: JSON.stringify({ path }),
       }),
     recipes: () => request<{ recipes: any[] }>("/projects/recipes"),
+  },
+
+  hub: {
+    search: (query: string, limit = 20) =>
+      request<{ results: any[] }>(`/models/hub-search?query=${encodeURIComponent(query)}&limit=${limit}`),
+    download: (modelId: string, outputDir?: string) =>
+      request<any>("/models/hub-download", {
+        method: "POST",
+        body: JSON.stringify({ model_id: modelId, output_dir: outputDir || "" }),
+      }),
   },
 
   advisor: {

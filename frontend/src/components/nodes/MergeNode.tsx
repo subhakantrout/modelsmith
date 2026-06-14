@@ -2,11 +2,17 @@ import { memo, useState, useCallback, useEffect } from "react";
 import type { PipelineNodeProps } from "./types";
 import { NodeWrapper } from "./NodeWrapper";
 import { api } from "../../lib/api";
+import { usePipelineStore } from "../../stores";
 
-function MergeNodeInner({ data }: PipelineNodeProps) {
+function MergeNodeInner({ id, data }: PipelineNodeProps) {
   const [method, setMethod] = useState("ties");
   const [modelPath1, setModelPath1] = useState("");
   const [modelPath2, setModelPath2] = useState("");
+  const updateNodeConfig = usePipelineStore((s) => s.updateNodeConfig);
+
+  useEffect(() => {
+    updateNodeConfig(id, { method, modelPath1, modelPath2 });
+  }, [id, method, modelPath1, modelPath2, updateNodeConfig]);
   const [methods, setMethods] = useState<{ id: string; name: string }[]>([]);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);

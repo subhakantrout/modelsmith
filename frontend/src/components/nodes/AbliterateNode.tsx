@@ -1,11 +1,17 @@
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useEffect } from "react";
 import type { PipelineNodeProps } from "./types";
 import { NodeWrapper } from "./NodeWrapper";
 import { api } from "../../lib/api";
+import { usePipelineStore } from "../../stores";
 import type { AbliterateResult } from "../../types/api";
 
-function AbliterateNodeInner({ data }: PipelineNodeProps) {
+function AbliterateNodeInner({ id, data }: PipelineNodeProps) {
   const [method, setMethod] = useState("direction_ablation");
+  const updateNodeConfig = usePipelineStore((s) => s.updateNodeConfig);
+
+  useEffect(() => {
+    updateNodeConfig(id, { method });
+  }, [id, method, updateNodeConfig]);
   const [result, setResult] = useState<AbliterateResult | null>(null);
   const [loading, setLoading] = useState(false);
 

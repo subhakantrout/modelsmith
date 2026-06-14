@@ -1,14 +1,17 @@
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useEffect } from "react";
 import type { PipelineNodeProps } from "./types";
 import { NodeWrapper } from "./NodeWrapper";
+import { usePipelineStore } from "../../stores";
 import { Shrink, Gauge, Layers, Database } from "lucide-react";
 
 const QUANT_OPTIONS = [
   { label: "Q4_K_M", value: "q4_k_m" },
+  { label: "Q5_0", value: "q5_0" },
   { label: "Q5_K_M", value: "q5_k_m" },
   { label: "Q6_K", value: "q6_k" },
   { label: "Q8_0", value: "q8_0" },
-  { label: "F16", value: "f16" },
+  { label: "Q3_K_M", value: "q3_k_m" },
+  { label: "Q2_K", value: "q2_k" },
 ];
 
 const PRUNE_OPTIONS = [
@@ -19,9 +22,9 @@ const PRUNE_OPTIONS = [
 
 const KV_OPTIONS = [
   { label: "None", value: "none" },
-  { label: "4-bit KV Cache", value: "q4" },
-  { label: "8-bit KV Cache", value: "q8" },
-  { label: "FP8 KV Cache", value: "fp8" },
+  { label: "TurboQuant (4-bit)", value: "turboquant" },
+  { label: "KVQuant (3-bit)", value: "kvquant" },
+  { label: "PCA", value: "pca" },
 ];
 
 const SPARSIFY_OPTIONS = [
@@ -31,18 +34,23 @@ const SPARSIFY_OPTIONS = [
   { label: "RigL", value: "rigl" },
 ];
 
-function CompressNodeInner({ data }: PipelineNodeProps) {
+function CompressNodeInner({ id, data }: PipelineNodeProps) {
   const [quant, setQuant] = useState("q4_k_m");
   const [prune, setPrune] = useState("light");
   const [kv, setKv] = useState("none");
   const [sparsify, setSparsify] = useState("none");
   const [savings, setSavings] = useState<string | null>(null);
+  const updateNodeConfig = usePipelineStore((s) => s.updateNodeConfig);
+
+  useEffect(() => {
+    updateNodeConfig(id, { quant, prune, kv, sparsify });
+  }, [id, quant, prune, kv, sparsify, updateNodeConfig]);
 
   const handleEstimate = useCallback(() => {
     const baseGb = 7;
-    const quantMap: Record<string, number> = { q4_k_m: 0.55, q5_k_m: 0.45, q6_k: 0.35, q8_0: 0.2, f16: 0 };
+    const quantMap: Record<string, number> = { q4_k_m: 0.55, q5_0: 0.53, q5_k_m: 0.45, q6_k: 0.35, q8_0: 0.2, q3_k_m: 0.65, q2_k: 0.75 };
     const pruneMap: Record<string, number> = { light: 0.1, medium: 0.25, heavy: 0.4 };
-    const kvMap: Record<string, number> = { q4: 0.05, q8: 0.03, fp8: 0.04, none: 0 };
+    const kvMap: Record<string, number> = { turboquant: 0.05, kvquant: 0.07, pca: 0.08, none: 0 };
     const sparsifyMap: Record<string, number> = { magnitude: 0.3, structured: 0.4, snip: 0.35, rigl: 0.4, none: 0 };
     const total = baseGb * (quantMap[quant] + pruneMap[prune] + kvMap[kv] + sparsifyMap[sparsify]);
     setSavings(`~${total.toFixed(1)} GB estimated VRAM savings`);

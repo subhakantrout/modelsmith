@@ -58,6 +58,9 @@ def run_merge(
     weights: Optional[list[float]] = None,
     dtype: str = "float16",
 ) -> dict:
+    if len(models) < 2:
+        raise ValueError("At least 2 models required for merging")
+
     try:
         from mergekit.merge import MergeOptions
         from mergekit.config import MergeConfiguration
@@ -90,7 +93,7 @@ def run_merge(
         with open(config_path, "w") as f:
             yaml.dump(merge_config, f)
 
-        config = MergeConfiguration.from_file(config_path)
+        config = MergeConfiguration.model_validate(merge_config)
         mergekit_run(config, output_dir, MergeOptions())
     except Exception as e:
         logger.error(f"Merge failed: {e}")

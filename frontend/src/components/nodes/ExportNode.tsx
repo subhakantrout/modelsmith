@@ -1,20 +1,25 @@
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useEffect } from "react";
 import type { PipelineNodeProps } from "./types";
 import { NodeWrapper } from "./NodeWrapper";
 import { api } from "../../lib/api";
+import { usePipelineStore } from "../../stores";
 import type { ExportResult } from "../../types/api";
 
 const FORMAT_LABELS: Record<string, string> = {
-  hf_safetensors: "HF Safetensors",
+  safetensors: "SafeTensors",
   gguf: "GGUF (llama.cpp)",
-  onnx: "ONNX",
 };
 
-function ExportNodeInner({ data }: PipelineNodeProps) {
-  const [format, setFormat] = useState("gguf");
-  const [outputDir, setOutputDir] = useState("");
+function ExportNodeInner({ id, data }: PipelineNodeProps) {
+  const [format, setFormat] = useState((data.config.format as string) || "gguf");
+  const [outputDir, setOutputDir] = useState((data.config.output_dir as string) || "");
   const [result, setResult] = useState<ExportResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const updateNodeConfig = usePipelineStore((s) => s.updateNodeConfig);
+
+  useEffect(() => {
+    updateNodeConfig(id, { format, output_dir: outputDir });
+  }, [id, format, outputDir, updateNodeConfig]);
 
   const handleValidate = useCallback(async () => {
     setLoading(true);

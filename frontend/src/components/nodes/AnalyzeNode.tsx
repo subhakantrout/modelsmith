@@ -1,10 +1,15 @@
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useEffect } from "react";
 import type { PipelineNodeProps } from "./types";
 import { NodeWrapper } from "./NodeWrapper";
-import { useModelStore } from "../../stores";
+import { useModelStore, usePipelineStore } from "../../stores";
 
-function AnalyzeNodeInner({ data }: PipelineNodeProps) {
+function AnalyzeNodeInner({ id, data }: PipelineNodeProps) {
   const [testOutput, setTestOutput] = useState("");
+  const updateNodeConfig = usePipelineStore((s) => s.updateNodeConfig);
+
+  useEffect(() => {
+    updateNodeConfig(id, { text: testOutput });
+  }, [id, testOutput, updateNodeConfig]);
   const analyzeRefusal = useModelStore((s) => s.analyzeRefusal);
   const analysis = useModelStore((s) => s.analysis);
   const loading = useModelStore((s) => s.loading);

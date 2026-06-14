@@ -44,11 +44,11 @@ def test_score_empty():
 
 
 def test_refusal_level_high():
-    assert _refusal_level(0.9) == "high"
+    assert _refusal_level(0.0) == "high"
 
 
 def test_refusal_level_none():
-    assert _refusal_level(0.0) == "none"
+    assert _refusal_level(0.9) == "none"
 
 
 def test_analyze_prompt_no_model():

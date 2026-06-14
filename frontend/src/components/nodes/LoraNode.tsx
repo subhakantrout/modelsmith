@@ -1,11 +1,17 @@
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useEffect } from "react";
 import type { PipelineNodeProps } from "./types";
 import { NodeWrapper } from "./NodeWrapper";
 import { api } from "../../lib/api";
+import { usePipelineStore } from "../../stores";
 
-function LoraNodeInner({ data }: PipelineNodeProps) {
-  const [adapterPath, setAdapterPath] = useState("");
-  const [action, setAction] = useState<"apply" | "fuse" | "extract">("apply");
+function LoraNodeInner({ id, data }: PipelineNodeProps) {
+  const [adapterPath, setAdapterPath] = useState((data.config.adapterPath as string) || "");
+  const [action, setAction] = useState<"apply" | "fuse" | "extract">((data.config.action as "apply" | "fuse" | "extract") || "apply");
+  const updateNodeConfig = usePipelineStore((s) => s.updateNodeConfig);
+
+  useEffect(() => {
+    updateNodeConfig(id, { action, adapterPath });
+  }, [id, action, adapterPath, updateNodeConfig]);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 

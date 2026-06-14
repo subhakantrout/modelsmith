@@ -168,112 +168,33 @@ export function PipelineCanvas() {
 
   return (
     <div className="flex h-full">
-      <div className="flex-1 flex flex-col">
-        <div className="flex items-center gap-2 px-4 py-2 bg-gray-900 border-b border-gray-700">
-          <span className="text-xs font-medium text-gray-400 mr-2">Nodes:</span>
-          <button
-            onClick={handleAddModelInput}
-            className="px-3 py-1 text-xs font-medium bg-blue-600 text-gray-100 rounded hover:bg-blue-500"
-          >
-            + Model Input
-          </button>
-          <button
-            onClick={handleAddAnalyze}
-            className="px-3 py-1 text-xs font-medium bg-yellow-600 text-gray-100 rounded hover:bg-yellow-500"
-          >
-            + Analyze
-          </button>
-          <button
-            onClick={handleAddAbliterate}
-            className="px-3 py-1 text-xs font-medium bg-purple-600 text-gray-100 rounded hover:bg-purple-500"
-          >
-            + Abliterate
-          </button>
-          <button
-            onClick={handleAddMerge}
-            className="px-3 py-1 text-xs font-medium bg-cyan-600 text-gray-100 rounded hover:bg-cyan-500"
-          >
-            + Merge
-          </button>
-          <button
-            onClick={handleAddLora}
-            className="px-3 py-1 text-xs font-medium bg-pink-600 text-gray-100 rounded hover:bg-pink-500"
-          >
-            + LoRA
-          </button>
-          <button
-            onClick={handleAddExport}
-            className="px-3 py-1 text-xs font-medium bg-green-600 text-gray-100 rounded hover:bg-green-500"
-          >
-            + Export
-          </button>
-          <button
-            onClick={handleAddCompress}
-            className="px-3 py-1 text-xs font-medium bg-orange-600 text-gray-100 rounded hover:bg-orange-500"
-          >
-            + Compress
-          </button>
-          <div className="flex-1" />
-          <input
-            type="text"
-            value={pipelineName}
-            onChange={(e) => setPipelineName(e.target.value)}
-            className="px-2 py-1 text-xs bg-gray-700 border border-gray-500 rounded text-gray-100 w-40"
-          />
-          <button
-            onClick={handleSave}
-            className="px-2 py-1 text-xs font-medium bg-emerald-700 text-gray-200 rounded hover:bg-emerald-600"
-          >
-            Save
-          </button>
-          <button
-            onClick={() => { handleListProjects(); setShowProjects(!showProjects); }}
-            className="px-2 py-1 text-xs font-medium bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
-          >
-            {showProjects ? "Hide" : "Load"}
-          </button>
-          <button
-            onClick={() => setChatOpen(!chatOpen)}
-            className={`px-3 py-1 text-xs font-medium rounded ${
-              chatOpen ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
-          >
-            Chat
-          </button>
-          <button
-            onClick={handleDryRun}
-            disabled={isRunning || nodes.length === 0}
-            className="px-2 py-1 text-xs font-medium bg-amber-600 text-gray-100 rounded hover:bg-amber-500 disabled:opacity-50"
-          >
-            Dry Run
-          </button>
-          <button
-            onClick={handleRun}
-            disabled={isRunning || nodes.length === 0}
-            className="px-4 py-1 text-xs font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50"
-          >
-            {isRunning ? "Running..." : "Run Pipeline"}
-          </button>
-          <button
-            onClick={handleExportRecipe}
-            disabled={nodes.length === 0}
-            className="px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600 disabled:opacity-50"
-          >
-            Export Recipe
-          </button>
-          <button
-            onClick={handleImportRecipe}
-            className="px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600"
-          >
-            Import Recipe
-          </button>
-          <button
-            onClick={clearPipeline}
-            disabled={nodes.length === 0}
-            className="px-3 py-1 text-xs font-medium bg-red-700 text-gray-200 rounded hover:bg-red-600 disabled:opacity-50"
-          >
-            Clear
-          </button>
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-gray-900 border-b border-gray-700 overflow-x-auto scrollbar-thin">
+          <span className="text-xs font-medium text-gray-400 mr-1 shrink-0">Nodes:</span>
+          <button onClick={handleAddModelInput} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-blue-600 text-gray-100 rounded hover:bg-blue-500">+ Input</button>
+          <button onClick={handleAddAnalyze} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-yellow-600 text-gray-100 rounded hover:bg-yellow-500">+ Analyze</button>
+          <button onClick={handleAddAbliterate} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-purple-600 text-gray-100 rounded hover:bg-purple-500">+ Abliterate</button>
+          <button onClick={handleAddMerge} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-cyan-600 text-gray-100 rounded hover:bg-cyan-500">+ Merge</button>
+          <button onClick={handleAddLora} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-pink-600 text-gray-100 rounded hover:bg-pink-500">+ LoRA</button>
+          <button onClick={handleAddExport} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-green-600 text-gray-100 rounded hover:bg-green-500">+ Export</button>
+          <button onClick={handleAddCompress} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-orange-600 text-gray-100 rounded hover:bg-orange-500">+ Compress</button>
+          <div className="hidden sm:block flex-1" />
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <input
+              type="text"
+              value={pipelineName}
+              onChange={(e) => setPipelineName(e.target.value)}
+              className="hidden sm:block px-2 py-1 text-xs bg-gray-700 border border-gray-500 rounded text-gray-100 w-28 lg:w-40"
+            />
+            <button onClick={handleSave} className="px-2 py-1 text-xs font-medium bg-emerald-700 text-gray-200 rounded hover:bg-emerald-600">Save</button>
+            <button onClick={() => { handleListProjects(); setShowProjects(!showProjects); }} className="px-2 py-1 text-xs font-medium bg-gray-700 text-gray-300 rounded hover:bg-gray-600">{showProjects ? "Hide" : "Load"}</button>
+            <button onClick={() => setChatOpen(!chatOpen)} className={`px-2 py-1 text-xs font-medium rounded ${chatOpen ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}>Chat</button>
+            <button onClick={handleDryRun} disabled={isRunning || nodes.length === 0} className="px-2 py-1 text-xs font-medium bg-amber-600 text-gray-100 rounded hover:bg-amber-500 disabled:opacity-50">Dry Run</button>
+            <button onClick={handleRun} disabled={isRunning || nodes.length === 0} className="px-2 sm:px-4 py-1 text-xs font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50">{isRunning ? "Running..." : "Run"}</button>
+            <button onClick={handleExportRecipe} disabled={nodes.length === 0} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600 disabled:opacity-50">Export Recipe</button>
+            <button onClick={handleImportRecipe} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600">Import</button>
+            <button onClick={clearPipeline} disabled={nodes.length === 0} className="px-2 py-1 text-xs font-medium bg-red-700 text-gray-200 rounded hover:bg-red-600 disabled:opacity-50">Clear</button>
+          </div>
         </div>
 
         <div className="flex-1">
@@ -300,7 +221,7 @@ export function PipelineCanvas() {
       </div>
 
       {dryRunResult && (
-        <div className="w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto">
+        <div className="w-72 sm:w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto shrink-0">
           <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
             <span className="text-sm font-medium text-gray-100">Dry Run Results</span>
             <button onClick={() => setDryRunResult(null)} className="text-gray-400 hover:text-gray-200 text-lg leading-none">×</button>
@@ -328,7 +249,7 @@ export function PipelineCanvas() {
       )}
 
       {showProjects && !chatOpen && !dryRunResult && (
-        <div className="w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto">
+        <div className="w-72 sm:w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto shrink-0">
           <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
             <span className="text-sm font-medium text-gray-100">Projects</span>
             <button onClick={() => setShowProjects(false)} className="text-gray-400 hover:text-gray-200 text-lg leading-none">×</button>
@@ -351,7 +272,7 @@ export function PipelineCanvas() {
       {chatOpen ? (
         <ChatPanel onClose={() => setChatOpen(false)} />
       ) : !dryRunResult && !showProjects && selectedNode && NodeComponent ? (
-        <div className="w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto">
+        <div className="w-72 sm:w-80 border-l border-gray-700 bg-gray-900 overflow-y-auto shrink-0">
           <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
             <span className="text-sm font-medium text-gray-100">
               {selectedNode.data.label}

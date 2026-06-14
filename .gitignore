@@ -37,9 +37,16 @@ Thumbs.db
 htmlcov/
 .mypy_cache/
 .ruff_cache/
+.cache/
 
 # Local docs & plans (not for public)
 docs/
 
 # OS
 *.log
+
+# Downloaded models (weights/configs)
+models/**/*.safetensors
+models/**/*.bin
+models/**/*.pt
+models/**/*.pth
