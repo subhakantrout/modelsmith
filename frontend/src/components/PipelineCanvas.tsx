@@ -104,11 +104,17 @@ export function PipelineCanvas() {
   const handleDryRun = useCallback(async () => {
     if (nodes.length === 0) return;
     try {
-      await dryRunPipeline();
+      const result = await dryRunPipeline();
+      if (result.valid) {
+        addToast(`Pipeline valid: ${result.steps_validated} steps`, "success");
+      } else {
+        const errors = (result.errors || []).join("; ");
+        addToast(`Pipeline invalid: ${errors}`, "error");
+      }
     } catch (err) {
-      console.error("Dry run failed:", err);
+      addToast(`Dry run failed: ${(err as Error).message}`, "error");
     }
-  }, [nodes]);
+  }, [nodes, addToast]);
 
   const handleExportRecipe = useCallback(async () => {
     const id = pipelineName.toLowerCase().replace(/\s+/g, "-");
