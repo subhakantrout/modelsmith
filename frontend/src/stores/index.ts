@@ -5,3 +5,4 @@ export { useModelStore } from "./modelStore";
 export { useChatStore } from "./chatStore";
 export { useDownloadStore } from "./downloadStore";
 export type { DownloadTask } from "./downloadStore";
+export { useToastStore } from "./toastStore";

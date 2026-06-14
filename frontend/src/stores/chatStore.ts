@@ -25,17 +25,42 @@ export const useChatStore = create<ChatState>((set) => ({
 
   sendMessage: async (prompt: string) => {
     if (!prompt.trim()) return;
+    
     set((state) => ({
-      messages: [...state.messages, { role: "user", content: prompt }],
+      messages: [...state.messages, { role: "user", content: prompt }, { role: "assistant", content: "" }],
       generating: true,
       error: null,
     }));
+
     try {
-      const result = await api.chat.generate({ prompt });
-      set((state) => ({
-        messages: [...state.messages, { role: "assistant", content: result.text }],
-        generating: false,
-      }));
+      // Connect to WebSocket using the current host to ensure it works regardless of where it's accessed
+      const wsUrl = `ws://${window.location.hostname}:8765/api/ws/chat`;
+      const ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ prompt }));
+      };
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "chunk") {
+          set((state) => {
+            const newMessages = [...state.messages];
+            newMessages[newMessages.length - 1].content += data.text;
+            return { messages: newMessages };
+          });
+        } else if (data.type === "done") {
+          ws.close();
+          set({ generating: false });
+        } else if (data.type === "error") {
+          set({ error: data.error, generating: false });
+          ws.close();
+        }
+      };
+      
+      ws.onerror = () => {
+        set({ error: "WebSocket connection failed. Ensure backend is running.", generating: false });
+      };
     } catch (err) {
       set({ error: (err as Error).message, generating: false });
     }

@@ -106,7 +106,13 @@ def _capture_activations(
 
     try:
         for prompt in prompts:
-            full_prompt = f"<|user|>\n{prompt}\n<|assistant|>\n"
+            if hasattr(tokenizer, 'apply_chat_template') and tokenizer.chat_template:
+                messages = [{"role": "user", "content": prompt}]
+                full_prompt = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+            else:
+                full_prompt = f"<|user|>\n{prompt}\n<|assistant|>\n"
             inputs = tokenizer(full_prompt, return_tensors="pt", truncation=True, max_length=512).to(device)
             with torch.no_grad():
                 model.generate(
@@ -221,7 +227,7 @@ class AblationHook:
             self.handle = None
 
 
-_active_hooks: list[AblationHook] = []
+
 
 
 def apply_abliteration(
@@ -246,24 +252,24 @@ def apply_abliteration(
             "abliterated": False,
         }
 
-    _active_hooks.append(hook)
+    mgr.active_hooks.append(hook)
 
     return {
         "status": "active",
         "layer_idx": layer_idx,
         "scale": scale,
         "direction_norm": round(direction_tensor.norm().item(), 4),
-        "active_hooks": len(_active_hooks),
+        "active_hooks": len(mgr.active_hooks),
         "abliterated": True,
     }
 
 
 def remove_abliteration() -> dict:
-    global _active_hooks
-    for hook in _active_hooks:
+    mgr = get_manager()
+    for hook in mgr.active_hooks:
         hook.remove()
-    count = len(_active_hooks)
-    _active_hooks = []
+    count = len(mgr.active_hooks)
+    mgr.active_hooks = []
     return {
         "status": "removed",
         "hooks_removed": count,
@@ -271,7 +277,8 @@ def remove_abliteration() -> dict:
 
 
 def get_abliteration_status() -> dict:
+    mgr = get_manager()
     return {
-        "active": len(_active_hooks) > 0,
-        "active_hooks": len(_active_hooks),
+        "active": len(mgr.active_hooks) > 0,
+        "active_hooks": len(mgr.active_hooks),
     }

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from backend.core.inference import generate
 from backend.core.model_manager import get_manager
+import asyncio
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -21,12 +22,13 @@ async def chat_generate(req: GenerateRequest):
     if not mgr.is_loaded:
         raise HTTPException(status_code=400, detail="No model loaded. Load a model first.")
     try:
-        result = generate(
-            prompt=req.prompt,
-            max_new_tokens=req.max_new_tokens,
-            temperature=req.temperature,
-            top_p=req.top_p,
-            system_prompt=req.system_prompt,
+        result = await asyncio.to_thread(
+            generate,
+            req.prompt,
+            req.max_new_tokens,
+            req.temperature,
+            req.top_p,
+            req.system_prompt,
         )
         return result
     except RuntimeError as e:

@@ -1,49 +1,38 @@
 # Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
 *.egg-info/
-*.eggs/
-*.whl
-build/
-*.so
-
-# Virtual environments
-venv/
+dist/
+*.egg
 .venv/
-env/
+venv/
+tmp_pip/
 
 # Node
 node_modules/
-dist/
-dist-ssr/
+frontend/dist/
 
-# Environment & secrets
+# Environment
 .env
-.env.*
+.env.local
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
+
+# OS
 .DS_Store
 Thumbs.db
 
-# Testing & caching
+# Model storage
+models/*
+
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
-.mypy_cache/
-.ruff_cache/
-.cache/
 
-# Local docs & plans (not for public)
-docs/
-
-# OS
-*.log
-
-# Downloaded models (user/system-specific)
-models/
+# Project specific
+*.recipe.json

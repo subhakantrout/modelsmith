@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Any
 from backend.core.pipeline import execute_pipeline, get_node_types
+import asyncio
 
 router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
 
@@ -20,7 +21,7 @@ class PipelineRequest(BaseModel):
 async def pipeline_run(req: PipelineRequest):
     steps = [s.model_dump() for s in req.steps]
     try:
-        result = execute_pipeline(steps)
+        result = await asyncio.to_thread(execute_pipeline, steps)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

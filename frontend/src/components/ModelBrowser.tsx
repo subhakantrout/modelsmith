@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { api } from "../lib/api";
 import type { ModelRegistryItem } from "../types/api";
-import { Search, Download, X, FolderOpen } from "lucide-react";
+import { useToastStore } from "../stores";
+import { Search, Download, FolderOpen } from "lucide-react";
 
 interface ModelBrowserProps {
   onSelect: (path: string) => void;
@@ -136,7 +137,7 @@ export function ModelBrowser({ onSelect, onClose }: ModelBrowserProps) {
                                 clearInterval(poll);
                                 setDownloadingId(null);
                                 setDownloadProgress(null);
-                                alert("Download failed: " + (s.error || "unknown error"));
+                                useToastStore.getState().addToast("Download failed: " + (s.error || "unknown error"), "error");
                               } else {
                                 setDownloadProgress({
                                   status: s.status,
@@ -151,7 +152,7 @@ export function ModelBrowser({ onSelect, onClose }: ModelBrowserProps) {
                         } catch (err) {
                           setDownloadingId(null);
                           setDownloadProgress(null);
-                          alert("Download failed: " + (err as Error).message);
+                          useToastStore.getState().addToast("Download failed: " + (err as Error).message, "error");
                         }
                       }}
                       disabled={downloadingId === m.id}

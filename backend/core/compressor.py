@@ -49,7 +49,12 @@ def estimate_gguf_quant_size(original_gb: float, quant_id: str) -> dict:
     }
 
 
-def estimate_pruned_size(original_gb: float, prune_ratio: float) -> dict:
+def estimate_pruned_size(original_gb: float, prune_ratio: float | str) -> dict:
+    if isinstance(prune_ratio, str):
+        resolved = PRUNE_RATIOS.get(prune_ratio.lower())
+        if resolved is None:
+            raise ValueError(f"Unknown prune ratio: {prune_ratio}. Choose from: {', '.join(PRUNE_RATIOS.keys())}")
+        prune_ratio = resolved
     pruned = round(original_gb * (1 - prune_ratio), 2)
     return {
         "original_gb": original_gb,

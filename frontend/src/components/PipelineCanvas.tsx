@@ -9,7 +9,8 @@ import {
   type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { usePipelineStore } from "../stores";
+import { usePipelineStore, useToastStore } from "../stores";
+import { ImportRecipeModal } from "./ImportRecipeModal";
 import {
   ModelInputNode,
   AnalyzeNode,
@@ -53,6 +54,7 @@ export function PipelineCanvas() {
   const clearPipeline = usePipelineStore((s) => s.clearPipeline);
   const isRunning = usePipelineStore((s) => s.isRunning);
   const selectedNodeId = usePipelineStore((s) => s.selectedNodeId);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
   const [dryRunResult, setDryRunResult] = useState<any>(null);
@@ -63,6 +65,7 @@ export function PipelineCanvas() {
   const listProjects = usePipelineStore((s) => s.listProjects);
   const projects = usePipelineStore((s) => s.projects);
   const loadProjectById = usePipelineStore((s) => s.loadProjectById);
+  const addToast = useToastStore((s) => s.addToast);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -135,29 +138,28 @@ export function PipelineCanvas() {
     try {
       const result = await api.projects.exportRecipe(id);
       if (result.status === "exported") {
-        alert(`Recipe exported to ${result.path}`);
+        addToast(`Recipe exported to ${result.path}`, "success");
       }
     } catch (err) {
-      console.error("Export failed:", err);
+      addToast(`Export failed: ${(err as Error).message}`, "error");
     }
-  }, [pipelineName]);
+  }, [pipelineName, addToast]);
 
-  const handleImportRecipe = useCallback(async () => {
-    const path = prompt("Enter recipe file path:");
-    if (!path) return;
+  const handleImportRecipe = useCallback(async (filePath: string) => {
     try {
-      const result = await api.projects.importRecipe(path);
+      const result = await api.projects.importRecipe(filePath);
       if (result.nodes) {
-        const store = usePipelineStore.getState();
-        store.nodes = result.nodes;
-        store.edges = result.edges || [];
+        usePipelineStore.setState({
+          nodes: result.nodes,
+          edges: result.edges || [],
+        });
       }
       if (result.name) setPipelineName(result.name);
-      alert(`Recipe "${result.name || "Unknown"}" imported`);
+      addToast(`Recipe "${result.name || "Unknown"}" imported`, "success");
     } catch (err) {
-      console.error("Import failed:", err);
+      addToast(`Import failed: ${(err as Error).message}`, "error");
     }
-  }, [loadProjectById, setPipelineName]);
+  }, [setPipelineName, addToast]);
 
   const selectedNode = useMemo(
     () => nodes.find((n) => n.id === selectedNodeId) || null,
@@ -192,7 +194,7 @@ export function PipelineCanvas() {
             <button onClick={handleDryRun} disabled={isRunning || nodes.length === 0} className="px-2 py-1 text-xs font-medium bg-amber-600 text-gray-100 rounded hover:bg-amber-500 disabled:opacity-50">Dry Run</button>
             <button onClick={handleRun} disabled={isRunning || nodes.length === 0} className="px-2 sm:px-4 py-1 text-xs font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50">{isRunning ? "Running..." : "Run"}</button>
             <button onClick={handleExportRecipe} disabled={nodes.length === 0} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600 disabled:opacity-50">Export Recipe</button>
-            <button onClick={handleImportRecipe} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600">Import</button>
+            <button onClick={() => setShowImportModal(true)} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600">Import</button>
             <button onClick={clearPipeline} disabled={nodes.length === 0} className="px-2 py-1 text-xs font-medium bg-red-700 text-gray-200 rounded hover:bg-red-600 disabled:opacity-50">Clear</button>
           </div>
         </div>
@@ -300,6 +302,13 @@ export function PipelineCanvas() {
           </div>
         </div>
       ) : null}
+
+      {showImportModal && (
+        <ImportRecipeModal
+          onImport={handleImportRecipe}
+          onClose={() => setShowImportModal(false)}
+        />
+      )}
     </div>
   );
 }

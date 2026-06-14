@@ -7,6 +7,7 @@ from backend.core.model_merger import (
     estimate_merge_ram,
     run_merge,
 )
+import asyncio
 
 router = APIRouter(prefix="/api/merge", tags=["merge"])
 
@@ -51,7 +52,7 @@ async def merge_run(req: MergeRequest):
     models = [m.model_dump() for m in req.models]
     output_dir = req.output_dir or f"/tmp/modelsmith_merge"
     try:
-        result = run_merge(req.method, models, output_dir, req.weights, req.dtype)
+        result = await asyncio.to_thread(run_merge, req.method, models, output_dir, req.weights, req.dtype)
         if not result.get("success"):
             raise HTTPException(status_code=500, detail=result.get("error", "Merge failed"))
         return result

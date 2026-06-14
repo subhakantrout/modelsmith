@@ -33,7 +33,17 @@ def generate(
     if not mgr.is_loaded:
         raise RuntimeError("No model loaded")
 
-    full_prompt = format_prompt(prompt, system_prompt)
+    tokenizer = mgr.tokenizer
+    if hasattr(tokenizer, 'apply_chat_template') and tokenizer.chat_template:
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        full_prompt = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+    else:
+        full_prompt = format_prompt(prompt, system_prompt)
     inputs = mgr.tokenizer(full_prompt, return_tensors="pt").to(mgr.model.device)
 
     start = time.time()
@@ -58,3 +68,49 @@ def generate(
         "elapsed_seconds": round(elapsed, 2),
         "tokens_per_second": round(tokens_per_sec, 1),
     }
+
+def generate_stream(
+    prompt: str,
+    max_new_tokens: int = 512,
+    temperature: float = 0.7,
+    top_p: float = 0.9,
+    system_prompt: str = "",
+):
+    from backend.core.model_manager import get_manager
+    from transformers import TextIteratorStreamer
+    from threading import Thread
+    
+    mgr = get_manager()
+    if not mgr.is_loaded:
+        raise RuntimeError("No model loaded")
+
+    tokenizer = mgr.tokenizer
+    if hasattr(tokenizer, 'apply_chat_template') and tokenizer.chat_template:
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        full_prompt = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+    else:
+        full_prompt = format_prompt(prompt, system_prompt)
+        
+    inputs = mgr.tokenizer(full_prompt, return_tensors="pt").to(mgr.model.device)
+    streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+    
+    generation_kwargs = dict(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        temperature=temperature,
+        top_p=top_p,
+        do_sample=temperature > 0,
+        pad_token_id=mgr.tokenizer.pad_token_id if mgr.tokenizer.pad_token_id is not None else mgr.tokenizer.eos_token_id,
+        streamer=streamer
+    )
+    
+    thread = Thread(target=mgr.model.generate, kwargs=generation_kwargs)
+    thread.start()
+    
+    for text in streamer:
+        yield text

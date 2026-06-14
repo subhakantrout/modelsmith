@@ -20,6 +20,7 @@ class ModelManager:
         self.model_path: str = ""
         self.model_tier: int = 0
         self.model_size_b: float = 0
+        self.active_hooks: list[Any] = []
 
     @property
     def is_loaded(self) -> bool:
@@ -73,10 +74,10 @@ class ModelManager:
         self.unload()
 
         config = self.compute_load_config(tier, model_size_billions)
-        self.tokenizer = AutoTokenizer.from_pretrained(path, trust_remote_code=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(path, trust_remote_code=False)
         self.model = AutoModelForCausalLM.from_pretrained(
             path,
-            trust_remote_code=True,
+            trust_remote_code=False,
             **config,
         )
         self.model.eval()
@@ -97,6 +98,9 @@ class ModelManager:
         self.model_path = ""
         self.model_tier = 0
         self.model_size_b = 0
+        for hook in self.active_hooks:
+            hook.remove()
+        self.active_hooks = []
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         logger.info("Model unloaded, GPU memory freed")

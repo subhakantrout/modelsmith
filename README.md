@@ -182,7 +182,7 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 ### v0.2 — Near Term
 - [x] Model Hub integration (browse, search, download with queue/progress)
 - [x] Download queue with pause/resume/cancel
-- [ ] WebSocket streaming for inference and progress
+- [x] WebSocket streaming for inference and progress
 - [ ] Tauri desktop wrapper (native app)
 - [ ] More merge methods (dare_ties, task_arithmetic)
 - [ ] Dark/light theme toggle

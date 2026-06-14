@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from backend.core.model_manager import get_manager
 from backend.core.system import detect_hardware, get_tier
+import asyncio
 
 router = APIRouter(prefix="/api/models", tags=["models"])
 
@@ -18,7 +19,7 @@ async def load_model(req: LoadModelRequest):
     tier = get_tier(specs["ram_total_gb"], specs.get("gpu_vram_gb"))
     mgr = get_manager()
     try:
-        result = mgr.load(req.path, tier, req.model_size_billions)
+        result = await asyncio.to_thread(mgr.load, req.path, tier, req.model_size_billions)
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

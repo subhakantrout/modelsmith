@@ -195,7 +195,6 @@ class DownloadManager:
                 del self._tasks[did]
 
     def list_all(self) -> list[dict]:
-        self._clear_terminal()
         result = []
         for did, t in self._tasks.items():
             entry = {k: v for k, v in t.items() if not k.startswith("_")}

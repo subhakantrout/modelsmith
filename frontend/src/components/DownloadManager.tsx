@@ -169,7 +169,6 @@ export function DownloadManager() {
 
 function DownloadRow({ task }: { task: DownloadTask }) {
   const pct = Math.round(task.progress * 100);
-  const elapsed = task.started_at ? Date.now() / 1000 - task.started_at : 0;
   const speed = task.speed_bytes_per_sec;
   const remaining = task.total_bytes - task.downloaded_bytes;
   const eta = speed > 0 ? remaining / speed : 0;

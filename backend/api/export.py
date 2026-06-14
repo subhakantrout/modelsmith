@@ -4,6 +4,7 @@ from typing import Optional
 from backend.core.exporter import (
     get_available_formats, validate_export, export_to_safetensors, export_to_gguf,
 )
+import asyncio
 
 router = APIRouter(prefix="/api/export", tags=["export"])
 
@@ -54,9 +55,9 @@ async def export_validate(req: ValidateExportRequest):
 async def export_run(req: ExportRequest):
     try:
         if req.format == "safetensors":
-            result = export_to_safetensors(req.output_dir)
+            result = await asyncio.to_thread(export_to_safetensors, req.output_dir)
         elif req.format == "gguf":
-            result = export_to_gguf(req.output_dir, req.quant)
+            result = await asyncio.to_thread(export_to_gguf, req.output_dir, req.quant)
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported format: {req.format}")
         return result

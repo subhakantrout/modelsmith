@@ -7,6 +7,7 @@ import { usePipelineStore, useModelStore, useSystemStore, useDownloadStore } fro
 import { api } from "../lib/api";
 import type { ModelRegistryItem } from "../types/api";
 import { HubSearch } from "./HubSearch";
+import { Skeleton } from "./Skeleton";
 import {
   Layers, Cpu, HardDrive, Radio, GitMerge,
   Activity, AlertTriangle, CheckCircle, Zap, FileText,
@@ -25,10 +26,7 @@ const CAPABILITY_DATA = [
   { metric: "Mergeability", value: 55 },
 ];
 
-const TIER_COLORS: Record<number, string> = {
-  1: "text-gray-400", 2: "text-cyan-400", 3: "text-yellow-400",
-  4: "text-orange-400", 5: "text-red-400",
-};
+
 const TIER_BG: Record<number, string> = {
   1: "bg-gray-500/20 border-gray-500/30",
   2: "bg-cyan-500/10 border-cyan-500/30",
@@ -70,14 +68,16 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
   const systemInfo = useSystemStore((s) => s.info);
   const { hubSearchOpen, setHubSearchOpen } = useDownloadStore();
   const [models, setModels] = useState<ModelRegistryItem[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
   const [layerData, setLayerData] = useState<any>(null);
+  const [layerDataLoading, setLayerDataLoading] = useState(true);
   const [compareModelA, setCompareModelA] = useState("");
   const [compareModelB, setCompareModelB] = useState("");
   const [compareResult, setCompareResult] = useState<any>(null);
 
   useEffect(() => {
-    api.models.registry().then((r: any) => setModels(r.models)).catch(() => {});
-    api.analyze.layers().then(setLayerData).catch(() => {});
+    api.models.registry().then((r: any) => { setModels(r.models); setModelsLoading(false); }).catch(() => setModelsLoading(false));
+    api.analyze.layers().then((d) => { setLayerData(d); setLayerDataLoading(false); }).catch(() => setLayerDataLoading(false));
   }, []);
 
   const modelLoaded = inspectedModel !== null;
@@ -183,7 +183,11 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
                 Local Models
                 {models.length > 0 && <span className="text-gray-600 font-normal">({models.length})</span>}
               </h3>
-              {models.length === 0 ? (
+              {modelsLoading ? (
+                <div className="flex items-center justify-center h-[210px]">
+                  <Skeleton className="w-full h-[180px]" />
+                </div>
+              ) : models.length === 0 ? (
                 <div className="flex items-center justify-center h-[210px] text-xs text-gray-600 italic">
                   <div className="text-center space-y-2">
                     <Download size={24} className="mx-auto text-gray-700" />
@@ -215,7 +219,12 @@ export function Dashboard({ onOpenCanvas }: DashboardProps) {
           </div>
 
           {/* ── Layer Heatmap ── */}
-          {layerData && layerData.layers?.length > 0 && (
+          {layerDataLoading ? (
+            <div className="rounded-xl border border-gray-700/30 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-4">
+              <Skeleton className="w-48 h-4 mb-3" />
+              <Skeleton className="w-full h-24" />
+            </div>
+          ) : layerData && layerData.layers?.length > 0 && (
             <div className="rounded-xl border border-gray-700/30 bg-gradient-to-br from-gray-800/60 to-gray-900/60 p-4 hover:shadow-lg hover:shadow-black/10 transition-shadow">
               <h3 className="text-xs font-semibold text-gray-300 mb-3 flex items-center gap-1.5">
                 <Layers size={13} className="text-purple-400" />

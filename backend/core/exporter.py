@@ -106,6 +106,9 @@ def export_to_gguf(output_dir: str, quant: str = "q4_k_m") -> dict:
 
         os.makedirs(output_dir, exist_ok=True)
         gguf_path = os.path.join(output_dir, f"model_{quant}.gguf")
+        
+        if safetensors_dir.startswith("-") or gguf_path.startswith("-"):
+            return {"format": "gguf", "success": False, "error": "Invalid paths"}
 
         try:
             cmd = [

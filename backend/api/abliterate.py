@@ -6,6 +6,7 @@ from backend.core.abliterator import (
     find_refusal_direction, apply_abliteration, remove_abliteration,
     get_abliteration_status, detect_model_family, REFUSAL_LAYERS,
 )
+import asyncio
 
 router = APIRouter(prefix="/api/abliterate", tags=["abliterate"])
 
@@ -26,11 +27,12 @@ class ApplyRequest(BaseModel):
 @router.post("/find-direction")
 async def find_direction(req: FindDirectionRequest):
     try:
-        result = find_refusal_direction(
-            layer_idx=req.layer_idx,
-            refusal_prompts=req.refusal_prompts,
-            compliance_prompts=req.compliance_prompts,
-            max_new_tokens=req.max_new_tokens,
+        result = await asyncio.to_thread(
+            find_refusal_direction,
+            req.layer_idx,
+            req.refusal_prompts,
+            req.compliance_prompts,
+            req.max_new_tokens,
         )
         direction = result.pop("direction")
         return {
