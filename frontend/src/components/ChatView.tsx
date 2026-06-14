@@ -1,10 +1,29 @@
 import { useState, useCallback } from "react";
 import { useChatStore, useModelStore } from "../stores";
 import { Markdown } from "./Markdown";
-import { Send, Trash2, AlertCircle, MessageSquare } from "lucide-react";
+import { Send, Trash2, AlertCircle, MessageSquare, Cpu } from "lucide-react";
 
 export function ChatView() {
+  const inspectedModel = useModelStore((s) => s.inspectedModel);
   const [prompt, setPrompt] = useState("");
+
+  const modelLoaded = inspectedModel !== null;
+
+  if (!modelLoaded) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center space-y-3 max-w-sm">
+          <div className="p-3 rounded-xl bg-gray-800/50 text-gray-500 w-fit mx-auto">
+            <Cpu size={32} />
+          </div>
+          <h3 className="text-sm font-semibold text-gray-300">No Model Loaded</h3>
+          <p className="text-xs text-gray-500">
+            Load a model using the Pipeline Canvas before chatting. Add a Model Input node, configure it, and run the pipeline.
+          </p>
+        </div>
+      </div>
+    );
+  }
   const messages = useChatStore((s) => s.messages);
   const generating = useChatStore((s) => s.generating);
   const error = useChatStore((s) => s.error);
