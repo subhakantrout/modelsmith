@@ -17,9 +17,14 @@ export function HubSearch({ onClose }: HubSearchProps) {
   const setPanelOpen = useDownloadStore((s) => s.setPanelOpen);
   const upsertDownload = useDownloadStore((s) => s.upsertDownload);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pollRefs = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
 
   useEffect(() => {
     inputRef.current?.focus();
+    return () => {
+      pollRefs.current.forEach((poll) => clearInterval(poll));
+      pollRefs.current.clear();
+    };
   }, []);
 
   const handleSearch = async () => {
@@ -49,6 +54,7 @@ export function HubSearch({ onClose }: HubSearchProps) {
           upsertDownload(s as any);
           if (["completed", "error", "cancelled"].includes(s.status)) {
             clearInterval(poll);
+            pollRefs.current.delete(modelId);
             setDownloadingIds((prev) => {
               const next = new Set(prev);
               next.delete(modelId);
@@ -57,6 +63,7 @@ export function HubSearch({ onClose }: HubSearchProps) {
           }
         } catch {
           clearInterval(poll);
+          pollRefs.current.delete(modelId);
           setDownloadingIds((prev) => {
             const next = new Set(prev);
             next.delete(modelId);
@@ -64,6 +71,7 @@ export function HubSearch({ onClose }: HubSearchProps) {
           });
         }
       }, 1200);
+      pollRefs.current.set(modelId, poll);
     } catch (err) {
       setDownloadError((err as Error).message);
       setDownloadingIds((prev) => {

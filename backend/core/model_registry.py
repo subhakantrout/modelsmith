@@ -184,7 +184,18 @@ class DownloadManager:
             for did in to_remove:
                 del self._tasks[did]
 
+    def _clear_terminal(self):
+        with self._lock:
+            terminal_state = ("completed", "error", "cancelled")
+            to_remove = [did for did, t in self._tasks.items()
+                         if t["status"] in terminal_state]
+            for did in to_remove:
+                if did in self._queue:
+                    self._queue.remove(did)
+                del self._tasks[did]
+
     def list_all(self) -> list[dict]:
+        self._clear_terminal()
         result = []
         for did, t in self._tasks.items():
             entry = {k: v for k, v in t.items() if not k.startswith("_")}
@@ -231,13 +242,14 @@ def _download_worker(mgr: DownloadManager, download_id: str):
         from huggingface_hub import HfApi, hf_hub_download
 
         api = HfApi()
-        info = api.model_info(task["model_id"], token=task["token"])
+        info = api.model_info(task["model_id"], token=task["token"], files_metadata=True)
         siblings = [s for s in info.siblings if not s.rfilename.endswith("/")]
         file_sizes: dict[str, int] = {s.rfilename: s.size or 0 for s in siblings}
         repo_files = list(file_sizes.keys())
 
         task["total_files"] = len(repo_files)
-        task["total_bytes"] = sum(file_sizes.values())
+        total_bytes = sum(file_sizes.values())
+        task["total_bytes"] = total_bytes
         os.makedirs(task["output_dir"], exist_ok=True)
         task["status"] = "downloading"
 
@@ -248,7 +260,6 @@ def _download_worker(mgr: DownloadManager, download_id: str):
                 mgr._on_task_done(download_id)
                 return
 
-            # Pause check between files
             while task["_pause"].is_set():
                 if task["_cancel"].is_set():
                     task["status"] = "cancelled"
@@ -258,10 +269,10 @@ def _download_worker(mgr: DownloadManager, download_id: str):
                 task["_pause"].wait(0.3)
 
             task["current_file"] = file_path
-            task["files_done"] = i
+            task["files_done"] = i + 1
 
             elapsed = time.time() - task["started_at"]
-            if task["downloaded_bytes"] > 0 and elapsed > 0:
+            if total_bytes > 0 and task["downloaded_bytes"] > 0 and elapsed > 0:
                 task["speed_bytes_per_sec"] = task["downloaded_bytes"] / elapsed
 
             hf_hub_download(
@@ -269,22 +280,34 @@ def _download_worker(mgr: DownloadManager, download_id: str):
                 filename=file_path,
                 local_dir=task["output_dir"],
                 token=task["token"],
-                resume_download=True,
-                local_dir_use_symlinks=False,
             )
 
-            task["downloaded_bytes"] += file_sizes.get(file_path, 0)
-            if task["total_bytes"] > 0:
-                task["progress"] = task["downloaded_bytes"] / task["total_bytes"]
+            if task["_cancel"].is_set():
+                task["status"] = "cancelled"
+                task["completed_at"] = time.time()
+                mgr._on_task_done(download_id)
+                return
 
-        task["status"] = "completed"
-        task["progress"] = 1.0
-        task["files_done"] = task["total_files"]
-        task["path"] = task["output_dir"]
+            task["downloaded_bytes"] += file_sizes.get(file_path, 0)
+            if total_bytes > 0:
+                task["progress"] = task["downloaded_bytes"] / total_bytes
+            elif task["total_files"] > 0:
+                task["progress"] = (i + 1) / task["total_files"]
+
+        if task["_cancel"].is_set():
+            task["status"] = "cancelled"
+        else:
+            task["status"] = "completed"
+            task["progress"] = 1.0
+            task["files_done"] = task["total_files"]
+            task["path"] = task["output_dir"]
         task["completed_at"] = time.time()
     except Exception as e:
-        task["status"] = "error"
-        task["error"] = str(e)
+        if task["_cancel"].is_set():
+            task["status"] = "cancelled"
+        else:
+            task["status"] = "error"
+            task["error"] = str(e)
         task["completed_at"] = time.time()
     mgr._on_task_done(download_id)
 
