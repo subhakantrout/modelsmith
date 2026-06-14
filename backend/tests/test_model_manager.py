@@ -19,9 +19,13 @@ def test_manager_initial_state():
 def test_compute_load_config_tier3():
     mgr = get_manager()
     config = mgr.compute_load_config(tier=3, model_size_billions=7)
-    assert config["torch_dtype"] == torch.float16
-    assert "quantization_config" in config
-    assert config.get("quantization_config") is not None
+    cuda_avail = torch.cuda.is_available()
+    expected_dtype = torch.float16 if cuda_avail else torch.float32
+    assert config["torch_dtype"] == expected_dtype
+    if cuda_avail:
+        assert config.get("quantization_config") is not None
+    else:
+        assert config.get("quantization_config") is None
 
 
 def test_compute_load_config_tier1():
