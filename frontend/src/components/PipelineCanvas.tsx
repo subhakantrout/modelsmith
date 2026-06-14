@@ -186,25 +186,51 @@ export function PipelineCanvas() {
         </div>
 
         <div className="flex-1">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={(_, node) => selectNode(node.id)}
-            onPaneClick={() => selectNode(null)}
-            nodeTypes={NODE_TYPES}
-            fitView
-            className="bg-gray-800"
-          >
-            <Background color="#374151" gap={20} />
-            <Controls className="!bg-gray-700 !border-gray-600" />
-            <MiniMap
-              className="!bg-gray-700 !border-gray-600"
-              nodeColor="#60a5fa"
-            />
-          </ReactFlow>
+          {nodes.length === 0 ? (
+            <div className="h-full flex items-center justify-center bg-gray-800/50">
+              <div className="text-center space-y-4 max-w-sm">
+                <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 w-fit mx-auto">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path d="M3 9h18" />
+                    <path d="M9 21V9" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-300">Empty Pipeline</h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Add nodes from the toolbar above to build your pipeline. Connect them to define the execution flow.
+                  </p>
+                </div>
+                <button
+                  onClick={handleAddModelInput}
+                  className="px-4 py-2 text-xs font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-500 hover:to-purple-500 transition-all"
+                >
+                  Add First Node
+                </button>
+              </div>
+            </div>
+          ) : (
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={(_, node) => selectNode(node.id)}
+              onPaneClick={() => selectNode(null)}
+              nodeTypes={NODE_TYPES}
+              fitView
+              className="bg-gray-800"
+            >
+              <Background color="#374151" gap={20} />
+              <Controls className="!bg-gray-700 !border-gray-600" />
+              <MiniMap
+                className="!bg-gray-700 !border-gray-600"
+                nodeColor="#60a5fa"
+              />
+            </ReactFlow>
+          )}
         </div>
       </div>
 
