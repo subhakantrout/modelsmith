@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "../lib/api";
 import { useDownloadStore } from "../stores/downloadStore";
-import { Search, Download, X, Star, ArrowDown, Loader } from "lucide-react";
+import { Search, Download, X, Star, ArrowDown, Loader, AlertCircle } from "lucide-react";
 
 interface HubSearchProps {
   onClose: () => void;
@@ -13,6 +13,7 @@ export function HubSearch({ onClose }: HubSearchProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const setPanelOpen = useDownloadStore((s) => s.setPanelOpen);
   const upsertDownload = useDownloadStore((s) => s.upsertDownload);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +64,8 @@ export function HubSearch({ onClose }: HubSearchProps) {
           });
         }
       }, 1200);
-    } catch {
+    } catch (err) {
+      setDownloadError((err as Error).message);
       setDownloadingIds((prev) => {
         const next = new Set(prev);
         next.delete(modelId);
@@ -91,6 +93,11 @@ export function HubSearch({ onClose }: HubSearchProps) {
 
         {/* Search */}
         <div className="px-4 py-3 border-b border-gray-700/30">
+          {downloadError && (
+            <div className="mb-2 px-3 py-1.5 text-[11px] text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg flex items-center gap-1.5">
+              <AlertCircle size={12} /> {downloadError}
+            </div>
+          )}
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />

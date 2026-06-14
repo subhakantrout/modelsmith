@@ -1,5 +1,6 @@
 import os
 import uuid
+import time
 import threading
 import logging
 from backend.core.model_loader import detect_format, ModelFormat
