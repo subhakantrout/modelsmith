@@ -33,8 +33,7 @@ export const useChatStore = create<ChatState>((set) => ({
     }));
 
     try {
-      // Connect to WebSocket using the current host to ensure it works regardless of where it's accessed
-      const wsUrl = `ws://${window.location.hostname}:8765/api/ws/chat`;
+      const wsUrl = `ws://${window.location.host}/api/ws/chat`;
       const ws = new WebSocket(wsUrl);
       
       ws.onopen = () => {

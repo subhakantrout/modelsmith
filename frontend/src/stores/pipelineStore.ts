@@ -124,8 +124,9 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
 
   saveCurrentProject: async () => {
     const { nodes, edges, pipelineName } = get();
-    const id = pipelineName.toLowerCase().replace(/\s+/g, "-");
-    await api.projects.save(id, pipelineName, nodes, edges);
+    const name = pipelineName.trim() || "Untitled Pipeline";
+    const id = name.toLowerCase().replace(/\s+/g, "-") || "untitled-pipeline";
+    await api.projects.save(id, name, nodes, edges);
     await get().listProjects();
   },
 

@@ -1,6 +1,7 @@
 import os
 import logging
 import shutil
+import torch
 from typing import Optional
 
 logger = logging.getLogger("modelsmith.compressor")
@@ -96,11 +97,11 @@ def run_quantization(
     output_path = resolve_model_path(output_path)
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"Input not found: {input_path}")
-    convert = shutil.which("llama-quantize") or shutil.which("llama.cpp/quantize")
+    convert = shutil.which("quantize") or shutil.which("llama-quantize")
     if not convert:
         return {
             "status": "unavailable",
-            "error": "llama-quantize not found. Install llama.cpp and build it.",
+            "error": "llama.cpp quantize not found. Install llama.cpp and build it.",
             "success": False,
         }
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
@@ -149,11 +150,7 @@ def prune_layers(model, layers_to_keep: list[int]) -> dict:
             obj = getattr(obj, part)
         
         layer_container = getattr(obj, parts[-1])
-        try:
-            new_layers = layer_container.__class__()
-        except TypeError:
-            import torch
-            new_layers = torch.nn.ModuleList()
+        new_layers = torch.nn.ModuleList()
         for i in layers_to_keep:
             new_layers.append(layer_container[i])
             

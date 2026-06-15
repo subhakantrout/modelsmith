@@ -39,14 +39,17 @@ def get_available_formats() -> list[dict]:
 
 
 def _check_llamacpp() -> bool:
-    return shutil.which("llama-convert") is not None or shutil.which("convert.py") is not None
+    return _find_llamacpp_convert() is not None
 
 
 def _find_llamacpp_convert() -> Optional[str]:
-    for candidate in ["llama-convert", "convert.py"]:
-        path = shutil.which(candidate)
+    for name in ["convert.py", "llama-convert"]:
+        path = shutil.which(name)
         if path:
             return path
+    legacy = os.path.expanduser("~/llama.cpp/convert.py")
+    if os.path.exists(legacy):
+        return legacy
     return None
 
 
@@ -75,15 +78,6 @@ def export_to_safetensors(output_dir: str) -> dict:
         "model_size_bytes": model_size,
         "success": True,
     }
-
-
-def _estimate_gguf_size(safetensors_dir: str, quant: str = "q4_k_m") -> int:
-    total = 0
-    for fname in os.listdir(safetensors_dir):
-        if fname.endswith(".safetensors"):
-            total += os.path.getsize(os.path.join(safetensors_dir, fname))
-    ratio = {"q8_0": 1.0, "q6_k": 0.85, "q5_k_m": 0.80, "q4_k_m": 0.70, "q3_k_m": 0.60, "q2_k": 0.50}
-    return int(total * ratio.get(quant, 0.70))
 
 
 def export_to_gguf(output_dir: str, quant: str = "q4_k_m") -> dict:

@@ -14,7 +14,7 @@
 
 **A visual node-based pipeline studio for local AI models — uncensor, merge, enhance, and compress without writing code.**
 
-[Why ModelSmith](#-why-modelsmith) • [Features](#-features) • [Use Cases](#-use-cases) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [API](#-api-overview) • [Roadmap](#-roadmap)
+[Why ModelSmith](#-why-modelsmith) • [Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
 </div>
 
@@ -74,34 +74,6 @@ Every operation runs a **pre-flight check** against your available RAM. If it wo
 
 ---
 
-## 🎯 Use Cases
-
-### "I want to use Llama 3.1 locally, but it refuses too many requests"
-
-**Pipeline:** `[Load] → [Analyze] → [Abliterate] → [Export]`
-
-ModelSmith loads your model, measures its refusal rate across 10+ test prompts, finds the exact refusal direction vector in the residual stream, and ablates it — all in a few clicks. Test the result immediately in the built-in chat panel.
-
-### "I have a coding model and a creative writing model — I want both skills in one"
-
-**Pipeline:** `[Load Base] → [Merge with Model B] → [Export]`
-
-Use the Merge node with SLERP or TIES to interpolate model weights. The dashboard shows capability scores so you can tune the merge ratio visually.
-
-### "This 70B model is amazing but won't fit in my 16 GB RAM"
-
-**Pipeline:** `[Load] → [Compress] → [Export]`
-
-Select GGUF quantization at Q4_K_M and see the estimated size drop from 35 GB to 12 GB — before you run anything. The pre-flight check confirms your system can handle it.
-
-### "I need my model to follow instructions better"
-
-**Pipeline:** `[Load] → [LoRA: Apply Adapter] → [Fuse] → [Export]`
-
-Download a LoRA adapter from HuggingFace, point ModelSmith at it, and fuse it permanently into your model. No training required.
-
----
-
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -109,24 +81,33 @@ Download a LoRA adapter from HuggingFace, point ModelSmith at it, and fuse it pe
 - Python 3.12+, Node.js 20+, npm 9+
 - (Optional) NVIDIA GPU with CUDA 12+
 
+### Backend Setup
+
 ```bash
-# Clone
+# Clone and enter
 git clone https://github.com/subhakantrout/modelsmith.git
 cd modelsmith
 
-# Backend
+# Python virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-# Frontend
-cd frontend && npm install && cd ..
-
-# Create local model storage
+# Create model storage
 mkdir -p models
 ```
 
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
 ### Run
+
+Open **two terminals**:
 
 | Terminal | Command |
 |----------|---------|
@@ -139,116 +120,66 @@ Open **http://localhost:5173** 🎉
 
 ## 🏗 Architecture
 
-<div align="center">
-<img src="frontend/public/arch-diagram.svg" alt="ModelSmith Architecture" width="800">
-</div>
-
-### Pipeline Execution Model
-
-<div align="center">
-<img src="frontend/public/pipeline-flow.svg" alt="Pipeline Execution Flow" width="800">
-</div>
-
-> Each node is a typed Python function. Connections represent data flow (model reference + metadata). The DAG executor validates the entire pipeline before running, with automatic fallback if a node fails. You can **test at any stage** via the built-in Chat panel.
-
----
-
-## 📊 Project in Numbers
-
-| Metric | Value |
-|--------|-------|
-| **Backend tests** | 143 passing (100%) |
-| **Frontend type coverage** | Strict TypeScript, zero errors |
-| **API endpoints** | 40+ RESTful routes |
-| **Pipeline nodes** | 7 types (Load, Analyze, Abliterate, Merge, LoRA, Compress, Export) |
-| **Frontend components** | 25+ React components |
-| **State stores** | 8 Zustand stores |
-| **App views** | 5 (Home, Canvas, Models, Chat, Settings) |
-| **Bundle size** | 466 KB (gzip: 141 KB) |
-
----
-
-## 🧪 Testing
-
-```bash
-source .venv/bin/activate
-python -m pytest backend/tests/ -v          # All 143 tests
-python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
-```
-
----
-
-## 🛣 Roadmap
-
-### v0.2 — Near Term
-- [x] Model Hub integration (browse, search, download with queue/progress)
-- [x] Download queue with pause/resume/cancel
-- [x] WebSocket streaming for inference and progress
-- [x] Dark/light theme toggle
-- [x] UI redesign with sidebar navigation and dedicated views
-- [ ] Tauri desktop wrapper (native app)
-- [ ] More merge methods (dare_ties, task_arithmetic)
-
-### v1.0 — Stable Release
-- [ ] Single `pip install modelsmith` command
-- [ ] Native installers (.exe, .dmg, .AppImage)
-- [ ] Vision model support (VLM abliteration)
-- [ ] Plugin system for third-party nodes
-- [ ] Inference server (OpenAI-compatible API)
-
-### v2.0 — Advanced
-- [ ] RLHF / DPO training nodes
-- [ ] Multi-GPU support
-- [ ] Batch processing (multiple models, same pipeline)
-- [ ] Community Hub for sharing pipelines
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Whether it's bug fixes, new features, or documentation improvements:
-
-1. **Fork** the repo
-2. **Create** a feature branch (`git checkout -b feature/amazing`)
-3. **Commit** your changes (`git commit -m 'feat: add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing`)
-5. **Open a Pull Request**
-
-### Development Setup
-
-```bash
-# Install dev dependencies
-pip install ruff pytest pytest-cov
-
-# Run linting
-ruff check backend/
-
-# TypeScript check
-cd frontend && npx tsc --noEmit
-
-# Run tests
-python -m pytest backend/tests/ -v
-```
-
-### Code Standards
-
-- **Python:** PEP 8, type hints required
-- **TypeScript:** Strict mode, avoid `any`
-- **Commits:** Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`)
-- **Tests:** Required for all new modules
-
----
-
-## 📚 Tech Stack
+### Stack
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | React 19, TypeScript 6.0, Vite 8, @xyflow/react, Tailwind CSS 4, Zustand 5, Lucide |
+| **Frontend** | React 19, TypeScript 6.0, Vite 8, @xyflow/react (ReactFlow), Tailwind CSS 4, Zustand 5, Lucide icons |
 | **Backend** | Python 3.12+, FastAPI, Uvicorn, Pydantic v2 |
 | **ML Engine** | transformers, PyTorch 2.12 (CUDA 12.4+), bitsandbytes, accelerate |
-| **Model Ops** | mergekit, PEFT, safetensors |
-| **System** | psutil, nvidia-ml-py |
+| **Model Ops** | mergekit, PEFT, safetensors, huggingface_hub |
+| **System** | psutil, nvidia-ml-py, httpx, websockets |
 | **Quantization** | llama.cpp (GGUF), bitsandbytes (NF4/FP4) |
+
+### Directory Structure
+
+```
+modelsmith/
+├── backend/
+│   ├── api/          — FastAPI route modules (models, analyze, abliterate, merge, lora, compress, export, chat, system, advisor, projects)
+│   ├── core/         — Business logic (model_registry, model_loader, model_manager, model_merger, compressor, system, analyzer, executor)
+│   └── tests/        — pytest test suite (143 tests)
+├── frontend/
+│   ├── src/
+│   │   ├── components/ — React components (Shell, Sidebar, PipelineCanvas, nodes/, 5 views, etc.)
+│   │   ├── stores/     — Zustand stores (pipeline, model, system, chat, download, view, settings)
+│   │   ├── lib/api.ts  — Typed API client for all endpoints
+│   │   └── types/      — TypeScript interfaces
+│   └── package.json
+├── models/            — Downloaded models (gitignored)
+├── docs/superpowers/  — Implementation plans and design specs
+├── README.md
+└── LICENSE
+```
+
+### UI Architecture
+
+- **Shell layout**: VS Code-style with 52px sidebar, top bar, bottom status bar, 290px right panel
+- **5 views**: Home (system overview + quick actions), Canvas (ReactFlow pipeline), Models (local model browser), Chat (full-page), Settings (HF token, theme, about)
+- **No react-router**: state-based view switching via `useViewStore`
+- **RightPanel**: context-sensitive — editable node configuration when a node is selected on Canvas
+
+### Pipeline Execution Model
+
+1. **7 node types**: ModelInput, Analyze, Abliterate, Merge, LoRA, Compress, Export
+2. Each node has typed config synced to a Zustand store; `pipelineRunner.ts` reads configs and calls backend APIs sequentially
+3. Nodes connect via edges forming a **DAG** — the runner topologically sorts and executes in order
+4. **Automatic fallback**: if a node fails, the Pipeline Advisor suggests alternatives
+5. Per-node status tracking: `idle → running → done | error` with visual feedback
+
+### Download Manager
+
+- **Backend**: `DownloadManager` singleton — thread-safe queue, MAX_CONCURRENT=3, pause/resume/cancel via `threading.Event`, byte-level progress via `HfApi.model_info().siblings`
+- **Frontend**: Persistent bottom panel, Active tab (progress bars, %, speed, ETA, current file, pause/cancel), History tab (completed/failed, retry, dismiss, clear all), global polling every 1.2s
+
+### Key Conventions
+
+- **Tailwind v4**: CSS-based config via `@theme` in `index.css` — no `tailwind.config.js`. Custom `gray-925` color, brand gradient `#6366f1` → `#a855f7`
+- **Zustand stores**: All stores in `stores/`, exported from `stores/index.ts`
+- **API client**: All methods in `lib/api.ts`, typed with `request<T>()`
+- **Types**: Shared interfaces in `types/api.ts`
+- **NodeWrapper**: wraps all pipeline nodes. `useReactFlow()` is try/caught to prevent crash when rendered outside ReactFlow tree (e.g., right panel)
+- **Download path**: defaults to `<project-root>/models/<model-name>/`
 
 ---
 
@@ -284,6 +215,68 @@ python -m pytest backend/tests/ -v
 | `POST` | `/api/export/run` | 💾 Export model |
 | `GET` | `/api/advisor/recommend` | 🧠 Get pipeline recommendation |
 
+---
+
+## 🤝 Contributing
+
+### Development Setup
+
+```bash
+# Install dev dependencies (from project root, with venv active)
+pip install ruff pytest pytest-cov
+
+# Run linting
+ruff check backend/
+
+# TypeScript check
+cd frontend && npx tsc --noEmit
+
+# Run tests
+python -m pytest backend/tests/ -v      # All 143 tests
+python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
+```
+
+### Code Standards
+
+- **Python**: PEP 8, type hints required. Use named loggers (`logging.getLogger("modelsmith.module_name")`)
+- **TypeScript**: Strict mode, avoid `any`
+- **Frontend**: Zustand for state, Tailwind v4 for styling (CSS-based via `@theme`)
+- **Errors**: Raise `HTTPException` in API routes, standard exceptions in core
+- **Commits**: Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`)
+- **Tests**: Required for all new modules
+
+### Pull Request Checklist
+
+- [ ] Tests pass (`python -m pytest backend/tests/ -v`)
+- [ ] Frontend builds (`cd frontend && npx vite build`)
+- [ ] TypeScript compiles with zero errors (`cd frontend && npx tsc --noEmit`)
+- [ ] No `any` types in new code where avoidable
+- [ ] Commit messages follow conventional commits
+
+---
+
+## 🧪 Testing
+
+```bash
+source .venv/bin/activate
+python -m pytest backend/tests/ -v             # All 143 tests
+python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
+```
+
+---
+
+## 📊 Project in Numbers
+
+| Metric | Value |
+|--------|-------|
+| **Backend tests** | 143 passing (100%) |
+| **Frontend type coverage** | Strict TypeScript, zero errors |
+| **API endpoints** | 40+ RESTful routes |
+| **Pipeline nodes** | 7 types (Load, Analyze, Abliterate, Merge, LoRA, Compress, Export) |
+| **Frontend components** | 25+ React components |
+| **State stores** | 8 Zustand stores |
+| **App views** | 5 (Home, Canvas, Models, Chat, Settings) |
+| **Bundle size** | 476 KB (gzip: 143 KB) |
 
 ---
 
@@ -299,6 +292,33 @@ python -m pytest backend/tests/ -v
 
 ---
 
+## 🛣 Roadmap
+
+### v0.2 — Near Term
+- [x] Model Hub integration (browse, search, download with queue/progress)
+- [x] Download queue with pause/resume/cancel
+- [x] WebSocket streaming for inference and progress
+- [x] Dark/light theme toggle
+- [x] UI redesign with sidebar navigation and dedicated views
+- [x] Canvas redesign (node palette, per-type glow, editable right panel, presets)
+- [ ] Tauri desktop wrapper (native app)
+- [ ] More merge methods (dare_ties, task_arithmetic)
+
+### v1.0 — Stable Release
+- [ ] Single `pip install modelsmith` command
+- [ ] Native installers (.exe, .dmg, .AppImage)
+- [ ] Vision model support (VLM abliteration)
+- [ ] Plugin system for third-party nodes
+- [ ] Inference server (OpenAI-compatible API)
+
+### v2.0 — Advanced
+- [ ] RLHF / DPO training nodes
+- [ ] Multi-GPU support
+- [ ] Batch processing (multiple models, same pipeline)
+- [ ] Community Hub for sharing pipelines
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
@@ -311,6 +331,6 @@ Copyright © 2026 **Subhakanta Rout**
 
 **⭐ Star this repo if you find it useful!**
 
-[Report Bug](https://github.com/subhakantrout/modelsmith/issues) • [Request Feature](https://github.com/subhakantrout/modelsmith/issues) • [Read Docs](https://github.com/subhakantrout/modelsmith)
+[Report Bug](https://github.com/subhakantrout/modelsmith/issues) • [Request Feature](https://github.com/subhakantrout/modelsmith/issues)
 
 </div>

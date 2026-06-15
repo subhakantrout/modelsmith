@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -12,6 +12,7 @@ import "@xyflow/react/dist/style.css";
 import { usePipelineStore, useToastStore, useSystemStore } from "../stores";
 import { useKeyboard } from "../lib/useKeyboard";
 import { ImportRecipeModal } from "./ImportRecipeModal";
+import { NodePalette } from "./NodePalette";
 import {
   ModelInputNode,
   AnalyzeNode,
@@ -22,8 +23,10 @@ import {
   CompressNode,
 } from "./nodes";
 import type { PipelineNodeProps } from "./nodes/types";
+import type { PipelineNodeType } from "../stores/pipelineStore";
 import { runPipeline } from "../stores/pipelineRunner";
 import { api } from "../lib/api";
+import { Play, Save, Download, Upload, Trash2, Layers, Zap, Shrink, Scissors } from "lucide-react";
 
 const typeToComponent: Record<string, React.ComponentType<PipelineNodeProps>> = {
   modelInput: ModelInputNode,
@@ -44,6 +47,30 @@ const NODE_TYPES: NodeTypes = {
   pipelineNode: PipelineNode,
 };
 
+interface PipelinePreset {
+  label: string;
+  description: string;
+  icon: typeof Layers;
+  nodes: { type: PipelineNodeType; offsetY: number }[];
+}
+
+const PRESETS: PipelinePreset[] = [
+  { label: "Basic Abliteration", description: "Input → Abliterate → Export", icon: Scissors, nodes: [
+    { type: "modelInput", offsetY: -120 },
+    { type: "abliterate", offsetY: 60 },
+    { type: "export", offsetY: 240 },
+  ]},
+  { label: "Model Analysis", description: "Input → Analyze", icon: Zap, nodes: [
+    { type: "modelInput", offsetY: -60 },
+    { type: "analyze", offsetY: 120 },
+  ]},
+  { label: "Compress & Export", description: "Input → Compress → Export", icon: Shrink, nodes: [
+    { type: "modelInput", offsetY: -120 },
+    { type: "compress", offsetY: 60 },
+    { type: "export", offsetY: 240 },
+  ]},
+];
+
 export function PipelineCanvas() {
   const nodes = usePipelineStore((s) => s.nodes);
   const edges = usePipelineStore((s) => s.edges);
@@ -60,7 +87,6 @@ export function PipelineCanvas() {
   const pipelineName = usePipelineStore((s) => s.pipelineName);
   const saveCurrentProject = usePipelineStore((s) => s.saveCurrentProject);
   const addToast = useToastStore((s) => s.addToast);
-  const systemInfo = useSystemStore((s) => s.info);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -77,21 +103,14 @@ export function PipelineCanvas() {
     [addEdgeToStore]
   );
 
-  const handleAddModelInput = useCallback(() => addNode("modelInput"), [addNode]);
-  const handleAddAnalyze = useCallback(() => addNode("analyze"), [addNode]);
-  const handleAddAbliterate = useCallback(() => addNode("abliterate"), [addNode]);
-  const handleAddMerge = useCallback(() => addNode("merge"), [addNode]);
-  const handleAddLora = useCallback(() => addNode("lora"), [addNode]);
-  const handleAddExport = useCallback(() => addNode("export"), [addNode]);
-  const handleAddCompress = useCallback(() => addNode("compress"), [addNode]);
-
   const handleSave = useCallback(async () => {
     try {
       await saveCurrentProject();
+      addToast("Pipeline saved", "success");
     } catch (err) {
       console.error("Save failed:", err);
     }
-  }, [saveCurrentProject]);
+  }, [saveCurrentProject, addToast]);
 
   const handleRun = useCallback(async () => {
     if (nodes.length === 0) return;
@@ -102,9 +121,9 @@ export function PipelineCanvas() {
     }
   }, [nodes]);
 
-
   const handleExportRecipe = useCallback(async () => {
-    const id = pipelineName.toLowerCase().replace(/\s+/g, "-");
+    const name = (pipelineName || "").trim() || "Untitled Pipeline";
+    const id = name.toLowerCase().replace(/\s+/g, "-") || "untitled-pipeline";
     try {
       const result = await api.projects.exportRecipe(id);
       if (result.status === "exported") {
@@ -137,64 +156,139 @@ export function PipelineCanvas() {
     }
   }, [selectedNodeId]);
 
+  const handleAddNode = useCallback((type: PipelineNodeType) => {
+    addNode(type);
+  }, [addNode]);
+
+  const handleApplyPreset = useCallback((preset: PipelinePreset) => {
+    clearPipeline();
+    const centerX = 300;
+    const centerY = 200;
+    const createdIds: string[] = [];
+    preset.nodes.forEach(({ type, offsetY }) => {
+      addNode(type, { x: centerX, y: centerY + offsetY });
+      createdIds.push(`node_${usePipelineStore.getState().nodes.length}`);
+    });
+    setTimeout(() => {
+      const store = usePipelineStore.getState();
+      const allNodes = store.nodes;
+      for (let i = 0; i < allNodes.length - 1; i++) {
+        const source = allNodes[i];
+        const target = allNodes[i + 1];
+        addEdgeToStore({
+          id: `e-${source.id}-${target.id}`,
+          source: source.id,
+          target: target.id,
+          type: "smoothstep",
+          animated: true,
+        } as Edge);
+      }
+    }, 0);
+  }, [clearPipeline, addNode, addEdgeToStore]);
+
   useKeyboard([
     { key: "s", ctrl: true, handler: handleSave },
     { key: "Delete", handler: removeSelectedNode },
     { key: "Backspace", handler: removeSelectedNode },
   ], !showImportModal);
 
+  const hasNodes = nodes.length > 0;
+
   return (
     <div className="flex h-full">
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-gray-900 border-b border-gray-700 overflow-x-auto scrollbar-thin">
-          <span className="text-xs font-medium text-gray-400 mr-1 shrink-0">Nodes:</span>
-          <button onClick={handleAddModelInput} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-blue-600 text-gray-100 rounded hover:bg-blue-500">+ Input</button>
-          <button onClick={handleAddAnalyze} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-yellow-600 text-gray-100 rounded hover:bg-yellow-500">+ Analyze</button>
-          <button onClick={handleAddAbliterate} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-purple-600 text-gray-100 rounded hover:bg-purple-500">+ Abliterate</button>
-          <button onClick={handleAddMerge} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-cyan-600 text-gray-100 rounded hover:bg-cyan-500">+ Merge</button>
-          <button onClick={handleAddLora} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-pink-600 text-gray-100 rounded hover:bg-pink-500">+ LoRA</button>
-          <button onClick={handleAddExport} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-green-600 text-gray-100 rounded hover:bg-green-500">+ Export</button>
-          <button onClick={handleAddCompress} className="shrink-0 px-2 sm:px-3 py-1 text-xs font-medium bg-orange-600 text-gray-100 rounded hover:bg-orange-500">+ Compress</button>
-          <div className="hidden sm:block flex-1" />
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <input
-              type="text"
-              value={pipelineName}
-              onChange={(e) => setPipelineName(e.target.value)}
-              className="hidden sm:block px-2 py-1 text-xs bg-gray-700 border border-gray-500 rounded text-gray-100 w-28 lg:w-40"
-            />
-            <button onClick={handleSave} className="px-2 py-1 text-xs font-medium bg-emerald-700 text-gray-200 rounded hover:bg-emerald-600">Save</button>
+      <NodePalette onAddNode={handleAddNode} />
 
-            <button onClick={handleRun} disabled={isRunning || nodes.length === 0} className="px-2 sm:px-4 py-1 text-xs font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-50">{isRunning ? "Running..." : "Run"}</button>
-            <button onClick={handleExportRecipe} disabled={nodes.length === 0} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600 disabled:opacity-50">Export Recipe</button>
-            <button onClick={() => setShowImportModal(true)} className="hidden lg:inline-block px-2 py-1 text-xs font-medium bg-teal-700 text-gray-200 rounded hover:bg-teal-600">Import</button>
-            <button onClick={clearPipeline} disabled={nodes.length === 0} className="px-2 py-1 text-xs font-medium bg-red-700 text-gray-200 rounded hover:bg-red-600 disabled:opacity-50">Clear</button>
-          </div>
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-925 border-b border-gray-800">
+          <input
+            type="text"
+            value={pipelineName}
+            onChange={(e) => setPipelineName(e.target.value)}
+            className="px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200 w-28 lg:w-36 focus:outline-none focus:border-indigo-500/50"
+          />
+          <div className="flex-1" />
+          <button
+            onClick={handleSave}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium bg-emerald-800/60 text-emerald-300 rounded hover:bg-emerald-700/60 transition-colors cursor-pointer"
+            title="Save (Ctrl+S)"
+          >
+            <Save size={12} />
+            <span className="hidden sm:inline">Save</span>
+          </button>
+          <button
+            onClick={handleRun}
+            disabled={isRunning || !hasNodes}
+            className="flex items-center gap-1 px-3 py-1 text-[11px] font-medium bg-indigo-600 text-gray-100 rounded hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            title="Run Pipeline"
+          >
+            <Play size={12} />
+            {isRunning ? "Running..." : "Run"}
+          </button>
+          <button
+            onClick={handleExportRecipe}
+            disabled={!hasNodes}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-gray-200 disabled:opacity-40 transition-colors cursor-pointer"
+            title="Export Recipe"
+          >
+            <Download size={12} />
+            <span className="hidden lg:inline">Export</span>
+          </button>
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-gray-200 transition-colors cursor-pointer"
+            title="Import Recipe"
+          >
+            <Upload size={12} />
+            <span className="hidden lg:inline">Import</span>
+          </button>
+          <button
+            onClick={clearPipeline}
+            disabled={!hasNodes}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium bg-gray-800 text-gray-400 rounded hover:bg-red-800/60 hover:text-red-300 disabled:opacity-40 transition-colors cursor-pointer"
+            title="Clear Pipeline"
+          >
+            <Trash2 size={12} />
+          </button>
         </div>
 
         <div className="flex-1">
-          {nodes.length === 0 ? (
-            <div className="h-full flex items-center justify-center bg-gray-800/50">
-              <div className="text-center space-y-4 max-w-sm">
-                <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 w-fit mx-auto">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <path d="M3 9h18" />
-                    <path d="M9 21V9" />
-                  </svg>
+          {!hasNodes ? (
+            <div className="h-full flex flex-col items-center justify-center bg-gray-900/60">
+              <div className="text-center space-y-5 max-w-md px-4">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 w-fit mx-auto">
+                  <Layers size={36} className="text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-300">Empty Pipeline</h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Add nodes from the toolbar above to build your pipeline. Connect them to define the execution flow.
+                  <h3 className="text-base font-semibold text-gray-200">Build a Pipeline</h3>
+                  <p className="text-xs text-gray-500 mt-1.5 max-w-xs mx-auto">
+                    Select a preset below to get started, or pick nodes from the sidebar
                   </p>
                 </div>
-                <button
-                  onClick={handleAddModelInput}
-                  className="px-4 py-2 text-xs font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-500 hover:to-purple-500 transition-all"
-                >
-                  Add First Node
-                </button>
+
+                <div className="grid gap-2.5 max-w-sm mx-auto">
+                  {PRESETS.map((preset) => {
+                    const Icon = preset.icon;
+                    return (
+                      <button
+                        key={preset.label}
+                        onClick={() => handleApplyPreset(preset)}
+                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-800 hover:border-indigo-500/30 hover:bg-gray-850 text-left transition-all group cursor-pointer"
+                      >
+                        <div className="p-2 rounded-lg bg-gray-800 group-hover:bg-indigo-500/10 transition-colors">
+                          <Icon size={16} className="text-gray-400 group-hover:text-indigo-400 transition-colors" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-gray-200 group-hover:text-indigo-300 transition-colors">{preset.label}</div>
+                          <div className="text-[10px] text-gray-600">{preset.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <p className="text-[10px] text-gray-700">
+                  Press <kbd className="px-1 py-0.5 rounded bg-gray-800 text-gray-500 font-mono text-[9px]">Delete</kbd> to remove a node
+                </p>
               </div>
             </div>
           ) : (
@@ -208,13 +302,14 @@ export function PipelineCanvas() {
               onPaneClick={() => selectNode(null)}
               nodeTypes={NODE_TYPES}
               fitView
-              className="bg-gray-800"
+              className="bg-gray-925"
             >
-              <Background color="#374151" gap={20} />
-              <Controls className="!bg-gray-700 !border-gray-600" />
+              <Background color="#1f2937" gap={20} size={1} />
+              <Controls className="!bg-gray-900 !border-gray-800 !rounded-lg !shadow-xl" />
               <MiniMap
-                className="!bg-gray-700 !border-gray-600"
-                nodeColor="#60a5fa"
+                className="!bg-gray-900 !border-gray-800 !rounded-lg !shadow-xl"
+                nodeColor="#6366f1"
+                maskColor="rgba(17,24,39,0.8)"
               />
             </ReactFlow>
           )}

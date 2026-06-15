@@ -199,7 +199,7 @@ def find_refusal_direction(
 
 class AblationHook:
     def __init__(self, direction: torch.Tensor, scale: float = 1.0):
-        self.direction = direction.to(direction.device)
+        self.direction = direction
         self.scale = scale
         self.handle = None
 

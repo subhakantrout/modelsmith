@@ -36,7 +36,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     throw new Error(`API ${res.status}: ${body}`);
   }
   const text = await res.text();
-  if (!text) return undefined as T;
+  if (!text) return undefined as unknown as T;
   return JSON.parse(text);
 }
 

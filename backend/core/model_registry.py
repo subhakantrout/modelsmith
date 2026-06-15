@@ -197,6 +197,9 @@ class DownloadManager:
             return None
         return {k: v for k, v in t.items() if not k.startswith("_")}
 
+    def _get_raw(self, download_id: str) -> dict | None:
+        return self._tasks.get(download_id)
+
     def _schedule_next(self):
         with self._lock:
             active = sum(
@@ -224,42 +227,42 @@ class DownloadManager:
 
 
 def _chunked_download(url: str, output_path: str, headers: dict, task: dict, file_size: int) -> bool:
-    import requests
+    import httpx
     resume_bytes = 0
     if os.path.exists(output_path):
         resume_bytes = os.path.getsize(output_path)
     range_header = {"Range": f"bytes={resume_bytes}-"} if resume_bytes > 0 else {}
     all_headers = {**headers, **range_header}
-    resp = requests.get(url, headers=all_headers, stream=True, timeout=30)
-    if resp.status_code == 416:
-        return True
-    resp.raise_for_status()
-    mode = "ab" if resume_bytes > 0 else "wb"
-    with open(output_path, mode) as f:
-        for chunk in resp.iter_content(chunk_size=1024 * 1024):
-            if task["_cancel"].is_set():
-                return False
-            while task["_pause"].is_set():
+    with httpx.Client(timeout=30) as client:
+        resp = client.get(url, headers=all_headers, follow_redirects=True)
+        if resp.status_code == 416:
+            return True
+        resp.raise_for_status()
+        mode = "ab" if resume_bytes > 0 else "wb"
+        with open(output_path, mode) as f:
+            for chunk in resp.iter_bytes(chunk_size=1024 * 1024):
                 if task["_cancel"].is_set():
                     return False
-                task["_pause"].wait(0.3)
-            if chunk:
-                f.write(chunk)
-                task["downloaded_bytes"] += len(chunk)
-                elapsed = time.time() - task["started_at"]
-                if elapsed > 1:
-                    task["speed_bytes_per_sec"] = task["downloaded_bytes"] / elapsed
-                if file_size > 0:
-                    task["progress"] = min(task["downloaded_bytes"] / file_size, 1.0)
+                while task["_pause"].is_set():
+                    if task["_cancel"].is_set():
+                        return False
+                    task["_pause"].wait(0.3)
+                if chunk:
+                    f.write(chunk)
+                    task["downloaded_bytes"] += len(chunk)
+                    elapsed = time.time() - task["started_at"]
+                    if elapsed > 1:
+                        task["speed_bytes_per_sec"] = task["downloaded_bytes"] / elapsed
+                    if file_size > 0:
+                        task["progress"] = min(task["downloaded_bytes"] / file_size, 1.0)
     return True
 
 
 def _download_worker(mgr: DownloadManager, download_id: str):
-    task = mgr._tasks.get(download_id)
+    task = mgr._get_raw(download_id)
     if not task:
         return
     try:
-        import requests
         from huggingface_hub import HfApi
         token = task.get("token") or None
         headers = {}

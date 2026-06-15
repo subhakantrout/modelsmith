@@ -229,7 +229,7 @@ export interface ModelSummary {
   };
   model?: {
     path: string;
-    tier: string;
+    tier: number;
     size_b: number;
     memory: Record<string, number>;
   };
