@@ -26,10 +26,11 @@ import type { PipelineNodeProps } from "./nodes/types";
 import type { PipelineNodeType } from "../stores/pipelineStore";
 import { runPipeline } from "../stores/pipelineRunner";
 import { api } from "../lib/api";
-import { Play, Save, Download, Upload, Trash2, Layers, Zap, Shrink, Scissors, RotateCcw, RotateCw, Copy, Wand2, History } from "lucide-react";
+import { Play, Save, Download, Upload, Trash2, Layers, Zap, Shrink, Scissors, RotateCcw, RotateCw, Copy, Wand2, History, Globe, FolderOpen } from "lucide-react";
 import { VramBudget } from "./VramBudget";
 import { PipelineBuilder } from "./PipelineBuilder";
 import { ProvenanceGraph } from "./ProvenanceGraph";
+import { MarketplaceBrowse } from "./MarketplaceBrowse";
 
 const typeToComponent: Record<string, React.ComponentType<PipelineNodeProps>> = {
   modelInput: ModelInputNode,
@@ -88,6 +89,7 @@ export function PipelineCanvas() {
   const [showPipelineBuilder, setShowPipelineBuilder] = useState(false);
   const [showProvenance, setShowProvenance] = useState(false);
   const [showVramBudget, setShowVramBudget] = useState(false);
+  const [showMarketplace, setShowMarketplace] = useState(false);
   const selectNode = usePipelineStore((s) => s.selectNode);
   const setPipelineName = usePipelineStore((s) => s.setPipelineName);
   const pipelineName = usePipelineStore((s) => s.pipelineName);
@@ -296,6 +298,19 @@ export function PipelineCanvas() {
           >
             <History size={12} />
           </button>
+          <button
+            onClick={() => setShowMarketplace(true)}
+            className="p-1.5 text-gray-500 hover:text-emerald-400 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+            title="Community Pipelines"
+          >
+            <Globe size={12} />
+          </button>
+          <button
+            className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+            title="Group Nodes"
+          >
+            <FolderOpen size={12} />
+          </button>
           <div className="w-px h-4 bg-gray-700 mx-0.5" />
           <button
             onClick={handleSave}
@@ -445,6 +460,16 @@ export function PipelineCanvas() {
 
       {showProvenance && (
         <ProvenanceGraph onClose={() => setShowProvenance(false)} />
+      )}
+
+      {showMarketplace && (
+        <MarketplaceBrowse
+          onApply={(nodes, edges) => {
+            usePipelineStore.setState({ nodes, edges });
+            setShowMarketplace(false);
+          }}
+          onClose={() => setShowMarketplace(false)}
+        />
       )}
     </div>
   );

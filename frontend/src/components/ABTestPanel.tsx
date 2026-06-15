@@ -1,4 +1,6 @@
-import { GitCompare, ArrowUp, ArrowDown } from "lucide-react";
+import { useState, useCallback } from "react";
+import { GitCompare, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import { api } from "../lib/api";
 
 interface ABTestResult {
   layer_idx: number;
@@ -8,8 +10,17 @@ interface ABTestResult {
   composite_score: number;
 }
 
+interface ScoreResult {
+  refusal_score: number;
+  quality_score: number;
+  composite_score: number;
+}
+
 interface ABTestPanelProps {
   results: ABTestResult[];
+  autoRun?: boolean;
+  configA?: Record<string, unknown>;
+  configB?: Record<string, unknown>;
 }
 
 function scoreColor(value: number): string {
@@ -38,13 +49,138 @@ function DiffBadge({ a, b }: { a: number; b: number }) {
   );
 }
 
-export function ABTestPanel({ results }: ABTestPanelProps) {
+export function ABTestPanel({ results, autoRun, configA, configB }: ABTestPanelProps) {
+  const [prompt, setPrompt] = useState("");
+  const [scoring, setScoring] = useState(false);
+  const [scoreResult, setScoreResult] = useState<{ version_a: ScoreResult; version_b: ScoreResult } | null>(null);
+  const [scoreError, setScoreError] = useState<string | null>(null);
+
+  const handleScore = useCallback(async () => {
+    if (!prompt.trim()) return;
+    setScoring(true);
+    setScoreError(null);
+    setScoreResult(null);
+    try {
+      let textA = prompt;
+      let textB = prompt;
+
+      if (autoRun && configA && configB) {
+        const [genA, genB] = await Promise.all([
+          api.chat.generate({ prompt, ...configA } as any),
+          api.chat.generate({ prompt, ...configB } as any),
+        ]);
+        textA = genA.text;
+        textB = genB.text;
+      }
+
+      const res = await fetch("/api/ab-test/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response_a: textA, response_b: textB }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Scoring failed");
+      }
+      const data = await res.json();
+      setScoreResult(data);
+    } catch (err) {
+      setScoreError((err as Error).message);
+    } finally {
+      setScoring(false);
+    }
+  }, [prompt, autoRun, configA, configB]);
+
   const sorted = [...results].sort((a, b) => b.composite_score - a.composite_score);
   const versionA = sorted[0] || null;
   const versionB = sorted[1] || null;
 
   return (
     <div className="space-y-2.5">
+      <div className="bg-gray-900 rounded-xl border border-gray-800 p-3 space-y-2">
+        <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium flex items-center gap-1.5">
+          <GitCompare size={12} />
+          A/B Test Scoring
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleScore()}
+            placeholder="Enter a test prompt..."
+            className="flex-1 px-2.5 py-1.5 text-xs bg-gray-800 border border-gray-700/50 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+          />
+          <button
+            onClick={handleScore}
+            disabled={scoring || !prompt.trim()}
+            className="px-3 py-1.5 text-[11px] font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            {scoring ? <Loader2 size={11} className="animate-spin" /> : <GitCompare size={11} />}
+            {scoring ? "Scoring..." : "Run A/B Test"}
+          </button>
+        </div>
+
+        {scoreError && (
+          <div className="flex items-center gap-1.5 text-xs text-red-400 bg-red-900/20 px-2 py-1.5 rounded">
+            <span>{scoreError}</span>
+          </div>
+        )}
+
+        {scoreResult && (
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="bg-gray-800/50 rounded-lg p-2.5 space-y-1">
+              <div className="text-[10px] text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                Version A
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-gray-500">Refusal</span>
+                <span className={`font-mono ${scoreColor(scoreResult.version_a.refusal_score)}`}>
+                  {(scoreResult.version_a.refusal_score * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-gray-500">Quality</span>
+                <span className={`font-mono ${scoreColor(scoreResult.version_a.quality_score)}`}>
+                  {(scoreResult.version_a.quality_score * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="flex justify-between text-[11px] border-t border-gray-700/30 pt-1 mt-1">
+                <span className="text-gray-500 font-medium">Score</span>
+                <span className={`font-mono font-medium ${scoreColor(scoreResult.version_a.composite_score)}`}>
+                  {(scoreResult.version_a.composite_score * 100).toFixed(0)}%
+                </span>
+              </div>
+            </div>
+            <div className="bg-gray-800/50 rounded-lg p-2.5 space-y-1">
+              <div className="text-[10px] text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                Version B
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-gray-500">Refusal</span>
+                <span className={`font-mono ${scoreColor(scoreResult.version_b.refusal_score)}`}>
+                  {(scoreResult.version_b.refusal_score * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-gray-500">Quality</span>
+                <span className={`font-mono ${scoreColor(scoreResult.version_b.quality_score)}`}>
+                  {(scoreResult.version_b.quality_score * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="flex justify-between text-[11px] border-t border-gray-700/30 pt-1 mt-1">
+                <span className="text-gray-500 font-medium">Score</span>
+                <span className={`font-mono font-medium ${scoreColor(scoreResult.version_b.composite_score)}`}>
+                  {(scoreResult.version_b.composite_score * 100).toFixed(0)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium flex items-center gap-1.5">
         <GitCompare size={12} />
         A/B Comparison

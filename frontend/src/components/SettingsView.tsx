@@ -3,6 +3,8 @@ import { useTheme } from "../lib/useTheme";
 import { useState } from "react";
 import { Key, Eye, EyeOff, Sun, Moon, Cpu, Info } from "lucide-react";
 
+// Token state shared with TopBar.tsx via settingsStore.hfToken — single source of truth
+
 export function SettingsView() {
   const { hfToken, setHfToken } = useSettingsStore();
   const { theme, toggleTheme } = useTheme();

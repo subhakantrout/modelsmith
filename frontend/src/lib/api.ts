@@ -247,6 +247,15 @@ export const api = {
     recipes: () => request<{ recipes: any[] }>("/projects/recipes"),
   },
 
+  marketplace: {
+    list: () =>
+      request<{ pipelines: any[] }>("/marketplace/pipelines"),
+    download: (id: string) =>
+      request<{ nodes: any[]; edges: any[] }>(`/marketplace/download/${id}`, {
+        method: "POST",
+      }),
+  },
+
   hub: {
     search: (query: string, limit = 20) =>
       request<{ results: any[] }>(`/models/hub-search?query=${encodeURIComponent(query)}&limit=${limit}`),

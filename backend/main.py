@@ -22,6 +22,9 @@ from backend.api.activation_stream import router as activation_stream_router
 from backend.api.advisor_ext import router as advisor_ext_router
 from backend.api.provenance import router as provenance_router
 from backend.api.pipeline_ext import router as pipeline_ext_router
+from backend.api.marketplace import router as marketplace_router
+from backend.api.ab_test import router as ab_test_router
+from backend.api.node_group import router as node_group_router
 
 logger = logging.getLogger("modelsmith")
 
@@ -61,6 +64,9 @@ app.include_router(activation_stream_router)
 app.include_router(advisor_ext_router)
 app.include_router(provenance_router)
 app.include_router(pipeline_ext_router)
+app.include_router(marketplace_router)
+app.include_router(ab_test_router)
+app.include_router(node_group_router)
 
 
 @app.get("/api/health")

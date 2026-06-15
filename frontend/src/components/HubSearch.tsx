@@ -6,6 +6,7 @@ import { Search, Download, X, Star, ArrowDown, Loader, AlertCircle } from "lucid
 
 interface HubSearchProps {
   onClose: () => void;
+  onSelect?: (path: string) => void;
 }
 
 export function HubSearch({ onClose }: HubSearchProps) {
@@ -62,6 +63,7 @@ export function HubSearch({ onClose }: HubSearchProps) {
               next.delete(modelId);
               return next;
             });
+            if (s.status === "completed") onSelect?.(s.path!);
           }
         } catch {
           clearInterval(poll);
