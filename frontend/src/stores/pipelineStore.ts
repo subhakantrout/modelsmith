@@ -25,6 +25,13 @@ export interface PipelineNodeData extends Record<string, unknown> {
 
 export type PipelineNode = Node<PipelineNodeData, "pipelineNode">;
 
+const MAX_HISTORY = 50;
+
+interface HistoryEntry {
+  nodes: PipelineNode[];
+  edges: Edge[];
+}
+
 interface PipelineState {
   nodes: PipelineNode[];
   edges: Edge[];
@@ -47,9 +54,21 @@ interface PipelineState {
   saveCurrentProject: () => Promise<void>;
   loadProjectById: (id: string) => Promise<void>;
   listProjects: () => Promise<void>;
+
+  undo: () => void;
+  redo: () => void;
+  duplicateNode: (id: string) => void;
 }
 
 let nodeIdCounter = 0;
+
+function randomPosition(baseX = 250, baseY = 250): { x: number; y: number } {
+  const spread = 150;
+  return {
+    x: baseX + Math.round((Math.random() - 0.5) * spread * 2),
+    y: baseY + Math.round((Math.random() - 0.5) * spread * 2),
+  };
+}
 
 export const usePipelineStore = create<PipelineState>((set, get) => ({
   nodes: [],
@@ -58,6 +77,23 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   isRunning: false,
   pipelineName: "Untitled Pipeline",
   projects: [],
+
+  _history: [] as HistoryEntry[],
+  _historyIndex: -1,
+
+  _pushHistory() {
+    const { nodes, edges } = get();
+    const entry: HistoryEntry = {
+      nodes: JSON.parse(JSON.stringify(nodes)),
+      edges: JSON.parse(JSON.stringify(edges)),
+    };
+    const hist = (get() as any)._history as HistoryEntry[];
+    const idx = (get() as any)._historyIndex as number;
+    const newHist = hist.slice(0, idx + 1);
+    newHist.push(entry);
+    if (newHist.length > MAX_HISTORY) newHist.shift();
+    (set as any)({ _history: newHist, _historyIndex: newHist.length - 1 }, true);
+  },
 
   onNodesChange: (changes) =>
     set({ nodes: applyNodeChanges(changes, get().nodes) as PipelineNode[] }),
@@ -79,7 +115,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
     const newNode: PipelineNode = {
       id,
       type: "pipelineNode",
-      position: position || { x: 250, y: 250 },
+      position: position || randomPosition(250, 250),
       data: {
         label: labelMap[type],
         type,
@@ -87,15 +123,31 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
         status: "idle",
       },
     };
-    set({ nodes: [...get().nodes, newNode] });
+    const hist = (get() as any)._history as HistoryEntry[];
+    const idx = (get() as any)._historyIndex as number;
+    const newHist = hist.slice(0, idx + 1);
+    newHist.push({ nodes: JSON.parse(JSON.stringify(get().nodes)), edges: JSON.parse(JSON.stringify(get().edges)) });
+    if (newHist.length > MAX_HISTORY) newHist.shift();
+    set({
+      nodes: [...get().nodes, newNode],
+      _history: newHist,
+      _historyIndex: newHist.length - 1,
+    } as any);
   },
 
   removeNode: (id) => {
+    const hist = (get() as any)._history as HistoryEntry[];
+    const idx = (get() as any)._historyIndex as number;
+    const newHist = hist.slice(0, idx + 1);
+    newHist.push({ nodes: JSON.parse(JSON.stringify(get().nodes)), edges: JSON.parse(JSON.stringify(get().edges)) });
+    if (newHist.length > MAX_HISTORY) newHist.shift();
     set({
       nodes: get().nodes.filter((n) => n.id !== id),
       edges: get().edges.filter((e) => e.source !== id && e.target !== id),
       selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
-    });
+      _history: newHist,
+      _historyIndex: newHist.length - 1,
+    } as any);
   },
 
   selectNode: (id) => set({ selectedNodeId: id }),
@@ -109,9 +161,34 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       ),
     }),
 
-  addEdge: (edge) => set({ edges: [...get().edges, edge] }),
+  addEdge: (edge) => {
+    const hist = (get() as any)._history as HistoryEntry[];
+    const idx = (get() as any)._historyIndex as number;
+    const newHist = hist.slice(0, idx + 1);
+    newHist.push({ nodes: JSON.parse(JSON.stringify(get().nodes)), edges: JSON.parse(JSON.stringify(get().edges)) });
+    if (newHist.length > MAX_HISTORY) newHist.shift();
+    set({
+      edges: [...get().edges, edge],
+      _history: newHist,
+      _historyIndex: newHist.length - 1,
+    } as any);
+  },
 
-  clearPipeline: () => set({ nodes: [], edges: [], selectedNodeId: null, pipelineName: "Untitled Pipeline" }),
+  clearPipeline: () => {
+    const hist = (get() as any)._history as HistoryEntry[];
+    const idx = (get() as any)._historyIndex as number;
+    const newHist = hist.slice(0, idx + 1);
+    newHist.push({ nodes: JSON.parse(JSON.stringify(get().nodes)), edges: JSON.parse(JSON.stringify(get().edges)) });
+    if (newHist.length > MAX_HISTORY) newHist.shift();
+    set({
+      nodes: [],
+      edges: [],
+      selectedNodeId: null,
+      pipelineName: "Untitled Pipeline",
+      _history: newHist,
+      _historyIndex: newHist.length - 1,
+    } as any);
+  },
 
   setPipelineName: (name) => set({ pipelineName: name }),
 
@@ -121,6 +198,55 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
         n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n
       ),
     }),
+
+  undo: () => {
+    const hist = (get() as any)._history as HistoryEntry[];
+    let idx = (get() as any)._historyIndex as number;
+    if (idx < 0) return;
+    const entry = hist[idx];
+    set({
+      nodes: entry.nodes,
+      edges: entry.edges,
+      selectedNodeId: null,
+      _historyIndex: idx - 1,
+    } as any);
+  },
+
+  redo: () => {
+    const hist = (get() as any)._history as HistoryEntry[];
+    let idx = (get() as any)._historyIndex as number;
+    if (idx >= hist.length - 2) return;
+    const entry = hist[idx + 2];
+    if (!entry) return;
+    set({
+      nodes: entry.nodes,
+      edges: entry.edges,
+      selectedNodeId: null,
+      _historyIndex: idx + 1,
+    } as any);
+  },
+
+  duplicateNode: (id) => {
+    const node = get().nodes.find((n) => n.id === id);
+    if (!node) return;
+    const newId = `node_${++nodeIdCounter}`;
+    const newNode: PipelineNode = {
+      ...node,
+      id: newId,
+      position: { x: node.position.x + 40, y: node.position.y + 40 },
+      data: { ...node.data, status: "idle" },
+    };
+    const hist = (get() as any)._history as HistoryEntry[];
+    const idx = (get() as any)._historyIndex as number;
+    const newHist = hist.slice(0, idx + 1);
+    newHist.push({ nodes: JSON.parse(JSON.stringify(get().nodes)), edges: JSON.parse(JSON.stringify(get().edges)) });
+    if (newHist.length > MAX_HISTORY) newHist.shift();
+    set({
+      nodes: [...get().nodes, newNode],
+      _history: newHist,
+      _historyIndex: newHist.length - 1,
+    } as any);
+  },
 
   saveCurrentProject: async () => {
     const { nodes, edges, pipelineName } = get();

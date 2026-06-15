@@ -1,3 +1,4 @@
+import math
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from backend.core.compressor import (
@@ -66,6 +67,44 @@ async def quant_estimate(req: QuantEstimateRequest):
 async def prune_estimate(req: PruneEstimateRequest):
     ratio = PRUNE_RATIOS.get(req.ratio, 0.5)
     return estimate_pruned_size(req.original_gb, ratio)
+
+
+class CompressRunRequest(BaseModel):
+    quant_id: str = "q4_k_m"
+    prune_ratio: str = "light"
+    kv_method: str | None = None
+    sparsify_method: str | None = None
+    model_path: str | None = None
+
+
+@router.post("/run")
+async def compress_run(req: CompressRunRequest):
+    mgr = get_manager()
+    original_gb = 0
+    if mgr.is_loaded and hasattr(mgr.model, "config"):
+        cfg = mgr.model.config
+        original_gb = (getattr(cfg, "num_hidden_layers", 32) * getattr(cfg, "hidden_size", 4096) * 4) / (1024**3)
+    if original_gb == 0:
+        original_gb = 7.0
+
+    quant_result = estimate_gguf_quant_size(original_gb, req.quant_id)
+    compressed_gb = quant_result.get("quantized_gb", quant_result.get("compressed_gb", original_gb))
+
+    saved = original_gb - compressed_gb
+    if req.prune_ratio:
+        ratio = PRUNE_RATIOS.get(req.prune_ratio, 0.25)
+        pruned = compressed_gb * (1 - ratio)
+        saved += compressed_gb - pruned
+        compressed_gb = pruned
+
+    return {
+        "status": "done",
+        "original_gb": round(original_gb, 2),
+        "compressed_gb": round(compressed_gb, 2),
+        "savings_gb": round(saved, 2),
+        "quant": req.quant_id,
+        "prune": req.prune_ratio,
+    }
 
 
 @router.post("/kv-estimate")

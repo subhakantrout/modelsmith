@@ -1,8 +1,9 @@
 import { memo, useState, useCallback, useEffect } from "react";
 import type { PipelineNodeProps } from "./types";
 import { NodeWrapper } from "./NodeWrapper";
-import { usePipelineStore } from "../../stores";
-import { Shrink, Gauge, Layers, Database } from "lucide-react";
+import { usePipelineStore, useToastStore } from "../../stores";
+import { api } from "../../lib/api";
+import { Shrink, Gauge, Layers, Database, Play, Loader } from "lucide-react";
 
 const QUANT_OPTIONS = [
   { label: "Q4_K_M", value: "q4_k_m" },
@@ -40,7 +41,10 @@ function CompressNodeInner({ id, data }: PipelineNodeProps) {
   const [kv, setKv] = useState("none");
   const [sparsify, setSparsify] = useState("none");
   const [savings, setSavings] = useState<string | null>(null);
+  const [compressing, setCompressing] = useState(false);
+  const [compressResult, setCompressResult] = useState<string | null>(null);
   const updateNodeConfig = usePipelineStore((s) => s.updateNodeConfig);
+  const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => {
     updateNodeConfig(id, { quant, prune, kv, sparsify });
@@ -55,6 +59,25 @@ function CompressNodeInner({ id, data }: PipelineNodeProps) {
     const total = baseGb * (quantMap[quant] + pruneMap[prune] + kvMap[kv] + sparsifyMap[sparsify]);
     setSavings(`~${total.toFixed(1)} GB estimated VRAM savings`);
   }, [quant, prune, kv, sparsify]);
+
+  const handleRun = useCallback(async () => {
+    setCompressing(true);
+    setCompressResult(null);
+    try {
+      const res = await api.compress.run({
+        quant_id: quant,
+        prune_ratio: prune,
+        kv_method: kv === "none" ? undefined : kv,
+        sparsify_method: sparsify === "none" ? undefined : sparsify,
+      });
+      setCompressResult(`Compressed from ${res.original_gb.toFixed(1)}GB → ${res.compressed_gb.toFixed(1)}GB (${Math.round((1 - res.compressed_gb / res.original_gb) * 100)}% savings)`);
+      addToast("Compression complete", "success");
+    } catch (err) {
+      setCompressResult(`Error: ${(err as Error).message}`);
+      addToast(`Compression failed: ${(err as Error).message}`, "error");
+    }
+    setCompressing(false);
+  }, [quant, prune, kv, sparsify, addToast]);
 
   return (
     <NodeWrapper data={data}>
@@ -116,16 +139,32 @@ function CompressNodeInner({ id, data }: PipelineNodeProps) {
           ))}
         </select>
 
-        <button
-          onClick={handleEstimate}
-          className="w-full px-2 py-1 text-xs font-medium text-gray-900 bg-orange-500 rounded hover:bg-orange-400"
-        >
-          Estimate VRAM Savings
-        </button>
+        <div className="flex gap-1.5">
+          <button
+            onClick={handleEstimate}
+            className="flex-1 px-2 py-1 text-xs font-medium text-gray-900 bg-orange-500 rounded hover:bg-orange-400"
+          >
+            Estimate
+          </button>
+          <button
+            onClick={handleRun}
+            disabled={compressing}
+            className="flex-1 px-2 py-1 text-xs font-medium text-gray-100 bg-indigo-600 rounded hover:bg-indigo-500 disabled:opacity-50 flex items-center justify-center gap-1"
+          >
+            {compressing ? <Loader size={11} className="animate-spin" /> : <Play size={11} />}
+            {compressing ? "Running..." : "Run"}
+          </button>
+        </div>
         {savings && (
           <div className="flex items-center gap-1.5 text-xs text-green-400">
             <Shrink size={13} />
             <span>{savings}</span>
+          </div>
+        )}
+        {compressResult && (
+          <div className={`flex items-center gap-1.5 text-xs ${compressResult.startsWith("Error") ? "text-red-400" : "text-green-400"}`}>
+            <Shrink size={13} />
+            <span>{compressResult}</span>
           </div>
         )}
       </div>

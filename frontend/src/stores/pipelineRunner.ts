@@ -1,6 +1,5 @@
 import { api } from "../lib/api";
-import { usePipelineStore, type PipelineNode } from "./pipelineStore";
-import { useModelStore } from "./modelStore";
+import { usePipelineStore } from "./pipelineStore";
 
 
 type NodeStatus = "idle" | "running" | "done" | "error";
@@ -14,7 +13,7 @@ function setNodeStatus(id: string, status: NodeStatus) {
 }
 
 function getTopologicalOrder(
-  nodes: PipelineNode[],
+  nodes: { id: string }[],
   edges: { source: string; target: string }[]
 ): string[] {
   const adj = new Map<string, string[]>();
@@ -49,7 +48,6 @@ function getTopologicalOrder(
 }
 
 
-
 export async function runPipeline() {
   const state = usePipelineStore.getState();
   const { nodes, edges } = state;
@@ -71,115 +69,26 @@ export async function runPipeline() {
   }
 
   try {
-    for (const nodeId of order) {
-      const currentNodes = usePipelineStore.getState().nodes;
-      const node = currentNodes.find((n) => n.id === nodeId);
-      if (!node) continue;
+    const steps = order.map((nodeId) => {
+      const node = nodes.find((n) => n.id === nodeId)!;
+      return { id: node.id, type: node.data.type, config: node.data.config };
+    });
 
-      setNodeStatus(nodeId, "running");
+    const result = await api.pipeline.run(steps);
 
-      try {
-        switch (node.data.type) {
-          case "modelInput": {
-            const path = node.data.config.path as string;
-            if (!path) throw new Error("No model path configured");
-            const size = (node.data.config.model_size_billions as number) || 7.0;
-            const result = await api.models.load(path, size);
-            useModelStore.getState().setInspectedModel({
-              path,
-              model_size_billions: size,
-              ...result,
-            });
-            break;
-          }
-          case "analyze": {
-            const text = (node.data.config.text as string) || "";
-            const result = await api.analyze.refusal(text);
-            useModelStore.getState().setAnalysis(result);
-            break;
-          }
-          case "abliterate": {
-            const layerIdx = node.data.config.layer_idx as number | undefined;
-            const scale = (node.data.config.scale as number) || 1.0;
+    result.results.forEach((r: any) => setNodeStatus(r.node_id, "done"));
 
-            const directionResult = await api.abliterate.findDirection(
-              layerIdx,
-              undefined,
-              undefined,
-              50
-            );
-
-            const applyResult = await api.abliterate.apply(
-              directionResult.direction,
-              directionResult.layer_idx,
-              scale
-            );
-
-            useModelStore.getState().setAbliterationResult({
-              direction: directionResult,
-              apply: applyResult,
-            });
-            break;
-          }
-          case "merge": {
-            const method = (node.data.config.method as string) || "ties";
-            const modelPath1 = (node.data.config.modelPath1 as string) || "";
-            const modelPath2 = (node.data.config.modelPath2 as string) || "";
-            if (!modelPath1 || !modelPath2) throw new Error("Two model paths required for merge");
-            const result = await api.merge.run(method, [
-              { path: modelPath1 },
-              { path: modelPath2 },
-            ]);
-            useModelStore.getState().setMergeResult(result);
-            break;
-          }
-          case "lora": {
-            const action = (node.data.config.action as string) || "apply";
-            const adapterPath = (node.data.config.adapterPath as string) || "";
-            if (action === "apply" && !adapterPath) throw new Error("Adapter path required");
-            const result = action === "apply" ? await api.lora.apply(adapterPath)
-              : action === "fuse" ? await api.lora.fuse()
-              : await api.lora.extract("/tmp/lora-extract");
-            useModelStore.getState().setLoraResult(result);
-            break;
-          }
-          case "export": {
-            const format = (node.data.config.format as string) || "safetensors";
-            const outputDir = (node.data.config.output_dir as string) || "";
-            const quant = (node.data.config.quantization as string) || "q4_k_m";
-            const result = await api.export.run(format, outputDir, quant);
-            useModelStore.getState().setExportResult(result);
-            break;
-          }
-          case "compress": {
-            const quantId = (node.data.config.quant as string) || "q4_k_m";
-            const pruneRatio = (node.data.config.prune as string) || "light";
-            const result = await api.compress.estimateQuant(7, quantId);
-            const pruneResult = await api.compress.estimatePrune(7, pruneRatio);
-            useModelStore.getState().setExportResult({ quant: result, prune: pruneResult });
-            break;
-          }
-        }
-        setNodeStatus(nodeId, "done");
-      } catch (err) {
-        const failedType = node.data.type;
-        let fallbackApplied = false;
-        try {
-          const altResp = await api.advisor.alternatives(failedType, 3);
-          const alts = altResp.alternatives || [];
-          if (alts.length > 0) {
-            const alt = alts[0];
-            console.warn(`Falling back from ${failedType} to ${alt.type}: ${alt.note}`);
-            setNodeStatus(nodeId, "done");
-            fallbackApplied = true;
-          }
-        } catch { }
-        if (!fallbackApplied) {
-          setNodeStatus(nodeId, "error");
-          throw err;
-        }
-      }
+    if (result.errors.length > 0) {
+      result.errors.forEach((e: any) => setNodeStatus(e.node_id, "error"));
+      throw new Error(`Pipeline failed at step ${result.completed_steps}: ${result.errors[0].error}`);
     }
+  } catch (err) {
+    const errorMessage = (err as Error).message;
+    if (errorMessage.includes("Pipeline failed") || errorMessage.includes("fetch failed")) {
+      throw err;
+    }
+    console.error("Pipeline execution error:", err);
+    throw err;
   } finally {
     usePipelineStore.setState({ isRunning: false });
   }

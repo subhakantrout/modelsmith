@@ -191,6 +191,17 @@ export const api = {
   },
 
   compress: {
+    run: (params: {
+      quant_id?: string;
+      prune_ratio?: string;
+      kv_method?: string;
+      sparsify_method?: string;
+      model_path?: string;
+    }) =>
+      request<any>("/compress/run", {
+        method: "POST",
+        body: JSON.stringify(params),
+      }),
     quants: () => request<{ quants: QuantInfo[] }>("/compress/quants"),
     sparsificationMethods: () => request<{ methods: SparsifyMethod[] }>("/compress/sparsification-methods"),
     estimateSparsify: (originalGb: number, method: string) =>
@@ -258,6 +269,15 @@ export const api = {
       request<{ download_id: string; status: string }>(`/models/hub-download-retry/${downloadId}`, { method: "POST" }),
     clearCompleted: () =>
       request<{ status: string }>("/models/hub-download-clear", { method: "POST" }),
+  },
+
+  pipeline: {
+    run: (steps: { id: string; type: string; config: Record<string, unknown> }[]) =>
+      request<any>("/pipeline/run", {
+        method: "POST",
+        body: JSON.stringify({ steps }),
+      }),
+    nodeTypes: () => request<any>("/pipeline/node-types"),
   },
 
   advisor: {

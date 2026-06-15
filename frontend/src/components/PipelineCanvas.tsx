@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, type DragEvent } from "react";
 import {
   ReactFlow,
   Background,
@@ -26,7 +26,10 @@ import type { PipelineNodeProps } from "./nodes/types";
 import type { PipelineNodeType } from "../stores/pipelineStore";
 import { runPipeline } from "../stores/pipelineRunner";
 import { api } from "../lib/api";
-import { Play, Save, Download, Upload, Trash2, Layers, Zap, Shrink, Scissors } from "lucide-react";
+import { Play, Save, Download, Upload, Trash2, Layers, Zap, Shrink, Scissors, RotateCcw, RotateCw, Copy, Wand2, History } from "lucide-react";
+import { VramBudget } from "./VramBudget";
+import { PipelineBuilder } from "./PipelineBuilder";
+import { ProvenanceGraph } from "./ProvenanceGraph";
 
 const typeToComponent: Record<string, React.ComponentType<PipelineNodeProps>> = {
   modelInput: ModelInputNode,
@@ -82,14 +85,31 @@ export function PipelineCanvas() {
   const isRunning = usePipelineStore((s) => s.isRunning);
   const selectedNodeId = usePipelineStore((s) => s.selectedNodeId);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showPipelineBuilder, setShowPipelineBuilder] = useState(false);
+  const [showProvenance, setShowProvenance] = useState(false);
+  const [showVramBudget, setShowVramBudget] = useState(false);
   const selectNode = usePipelineStore((s) => s.selectNode);
   const setPipelineName = usePipelineStore((s) => s.setPipelineName);
   const pipelineName = usePipelineStore((s) => s.pipelineName);
   const saveCurrentProject = usePipelineStore((s) => s.saveCurrentProject);
   const addToast = useToastStore((s) => s.addToast);
 
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const undo = usePipelineStore((s) => (s as any).undo as () => void);
+  const redo = usePipelineStore((s) => (s as any).redo as () => void);
+  const duplicateNode = usePipelineStore((s) => (s as any).duplicateNode as (id: string) => void);
+
+  const defaultEdgeOptions = useMemo(() => ({
+    type: "smoothstep",
+    animated: true,
+    style: { stroke: "#4b5563", strokeWidth: 2 },
+    labelStyle: { fill: "#9ca3af", fontSize: 10 },
+  }), []);
+
   const onConnect = useCallback(
     (connection: Connection) => {
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      const targetNode = nodes.find((n) => n.id === connection.target);
       addEdgeToStore({
         id: `e-${connection.source}-${connection.target}`,
         source: connection.source!,
@@ -98,9 +118,12 @@ export function PipelineCanvas() {
         targetHandle: connection.targetHandle,
         type: "smoothstep",
         animated: true,
+        label: sourceNode && targetNode
+          ? `${sourceNode.data.label} → ${targetNode.data.label}`
+          : undefined,
       } as Edge);
     },
-    [addEdgeToStore]
+    [addEdgeToStore, nodes]
   );
 
   const handleSave = useCallback(async () => {
@@ -117,9 +140,9 @@ export function PipelineCanvas() {
     try {
       await runPipeline();
     } catch (err) {
-      console.error("Pipeline execution failed:", err);
+      addToast(`Pipeline failed: ${(err as Error).message}`, "error");
     }
-  }, [nodes]);
+  }, [nodes, addToast]);
 
   const handleExportRecipe = useCallback(async () => {
     const name = (pipelineName || "").trim() || "Untitled Pipeline";
@@ -156,6 +179,13 @@ export function PipelineCanvas() {
     }
   }, [selectedNodeId]);
 
+  const duplicateSelectedNode = useCallback(() => {
+    if (selectedNodeId) {
+      duplicateNode(selectedNodeId);
+      addToast("Node duplicated", "success");
+    }
+  }, [selectedNodeId, duplicateNode, addToast]);
+
   const handleAddNode = useCallback((type: PipelineNodeType) => {
     addNode(type);
   }, [addNode]);
@@ -164,10 +194,8 @@ export function PipelineCanvas() {
     clearPipeline();
     const centerX = 300;
     const centerY = 200;
-    const createdIds: string[] = [];
     preset.nodes.forEach(({ type, offsetY }) => {
       addNode(type, { x: centerX, y: centerY + offsetY });
-      createdIds.push(`node_${usePipelineStore.getState().nodes.length}`);
     });
     setTimeout(() => {
       const store = usePipelineStore.getState();
@@ -181,13 +209,39 @@ export function PipelineCanvas() {
           target: target.id,
           type: "smoothstep",
           animated: true,
+          label: `${source.data.label} → ${target.data.label}`,
         } as Edge);
       }
     }, 0);
   }, [clearPipeline, addNode, addEdgeToStore]);
 
+  const handleDragOver = useCallback((event: DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const handleDrop = useCallback((event: DragEvent) => {
+    event.preventDefault();
+    const type = event.dataTransfer.getData("application/node-type") as PipelineNodeType | undefined;
+    if (!type) return;
+    const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+    if (!bounds) return;
+    const position = {
+      x: event.clientX - bounds.left - 75,
+      y: event.clientY - bounds.top - 30,
+    };
+    addNode(type, position);
+  }, [addNode]);
+
   useKeyboard([
     { key: "s", ctrl: true, handler: handleSave },
+    { key: "z", ctrl: true, handler: undo },
+    { key: "z", ctrl: true, shift: true, handler: redo },
+    { key: "d", ctrl: true, handler: duplicateSelectedNode },
+    { key: "a", ctrl: true, handler: () => {
+      const allIds = usePipelineStore.getState().nodes.map((n) => n.id);
+      if (allIds.length > 0) usePipelineStore.getState().selectNode(allIds[0]);
+    }},
     { key: "Delete", handler: removeSelectedNode },
     { key: "Backspace", handler: removeSelectedNode },
   ], !showImportModal);
@@ -208,6 +262,42 @@ export function PipelineCanvas() {
           />
           <div className="flex-1" />
           <button
+            onClick={undo}
+            className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+            title="Undo (Ctrl+Z)"
+          >
+            <RotateCcw size={12} />
+          </button>
+          <button
+            onClick={redo}
+            className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+            title="Redo (Ctrl+Shift+Z)"
+          >
+            <RotateCw size={12} />
+          </button>
+          <button
+            onClick={() => setShowPipelineBuilder(true)}
+            className="p-1.5 text-gray-500 hover:text-indigo-400 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+            title="Build with AI"
+          >
+            <Wand2 size={12} />
+          </button>
+          <button
+            onClick={() => setShowVramBudget(!showVramBudget)}
+            className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+            title="VRAM Budget"
+          >
+            <Layers size={12} />
+          </button>
+          <button
+            onClick={() => setShowProvenance(true)}
+            className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+            title="Provenance History"
+          >
+            <History size={12} />
+          </button>
+          <div className="w-px h-4 bg-gray-700 mx-0.5" />
+          <button
             onClick={handleSave}
             className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium bg-emerald-800/60 text-emerald-300 rounded hover:bg-emerald-700/60 transition-colors cursor-pointer"
             title="Save (Ctrl+S)"
@@ -223,6 +313,15 @@ export function PipelineCanvas() {
           >
             <Play size={12} />
             {isRunning ? "Running..." : "Run"}
+          </button>
+          <button
+            onClick={duplicateSelectedNode}
+            disabled={!selectedNodeId}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium bg-gray-800 text-gray-400 rounded hover:bg-gray-700 hover:text-gray-200 disabled:opacity-40 transition-colors cursor-pointer"
+            title="Duplicate (Ctrl+D)"
+          >
+            <Copy size={12} />
+            <span className="hidden lg:inline">Duplicate</span>
           </button>
           <button
             onClick={handleExportRecipe}
@@ -292,35 +391,60 @@ export function PipelineCanvas() {
               </div>
             </div>
           ) : (
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={(_, node) => selectNode(node.id)}
-              onPaneClick={() => selectNode(null)}
-              nodeTypes={NODE_TYPES}
-              fitView
-              className="bg-gray-925"
-            >
-              <Background color="#1f2937" gap={20} size={1} />
-              <Controls className="!bg-gray-900 !border-gray-800 !rounded-lg !shadow-xl" />
-              <MiniMap
-                className="!bg-gray-900 !border-gray-800 !rounded-lg !shadow-xl"
-                nodeColor="#6366f1"
-                maskColor="rgba(17,24,39,0.8)"
-              />
-            </ReactFlow>
+            <div ref={reactFlowWrapper} className="flex-1" onDragOver={handleDragOver} onDrop={handleDrop}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeClick={(_, node) => selectNode(node.id)}
+                onPaneClick={() => selectNode(null)}
+                nodeTypes={NODE_TYPES}
+                defaultEdgeOptions={defaultEdgeOptions}
+                fitView
+                panOnDrag={[1, 2]}
+                selectNodesOnDrag={false}
+                className="bg-gray-925"
+              >
+                <Background color="#1f2937" gap={20} size={1} />
+                <Controls className="!bg-gray-900 !border-gray-800 !rounded-lg !shadow-xl" />
+                <MiniMap
+                  className="!bg-gray-900 !border-gray-800 !rounded-lg !shadow-xl"
+                  nodeColor="#6366f1"
+                  maskColor="rgba(17,24,39,0.8)"
+                />
+              </ReactFlow>
+            </div>
           )}
         </div>
       </div>
+
+      {showVramBudget && hasNodes && (
+        <div className="absolute bottom-0 left-52 right-0 z-10">
+          <VramBudget />
+        </div>
+      )}
 
       {showImportModal && (
         <ImportRecipeModal
           onImport={handleImportRecipe}
           onClose={() => setShowImportModal(false)}
         />
+      )}
+
+      {showPipelineBuilder && (
+        <PipelineBuilder
+          onPipelineGenerated={(newNodes, newEdges) => {
+            usePipelineStore.setState({ nodes: newNodes, edges: newEdges });
+            setShowPipelineBuilder(false);
+          }}
+          onClose={() => setShowPipelineBuilder(false)}
+        />
+      )}
+
+      {showProvenance && (
+        <ProvenanceGraph onClose={() => setShowProvenance(false)} />
       )}
     </div>
   );

@@ -95,8 +95,13 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
                   return (
                     <button
                       key={item.type}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("application/node-type", item.type);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
                       onClick={() => onAddNode(item.type)}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all hover:bg-gray-800 group cursor-pointer"
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all hover:bg-gray-800 group cursor-pointer hover:ring-1 hover:ring-indigo-500/30"
                       title={item.description}
                     >
                       <Icon size={13} className={`${item.color} shrink-0`} />
