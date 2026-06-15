@@ -5,6 +5,7 @@ import type { ModelRegistryItem } from "../types/api";
 import { useViewStore } from "../stores/viewStore";
 import { HubSearch } from "./HubSearch";
 import { Box, Cpu, HardDrive, Download, Activity, ArrowRight } from "lucide-react";
+import { CardSkeleton, TableSkeleton } from "./Skeleton";
 
 export function HomeView() {
   const nodes = usePipelineStore((s) => s.nodes);
@@ -117,7 +118,7 @@ export function HomeView() {
               <Search size={13} className="text-green-400" /> Local Models
             </h3>
             {modelsLoading ? (
-              <div className="text-xs text-gray-500 animate-pulse py-4 text-center">Loading...</div>
+              <TableSkeleton rows={3} />
             ) : models.length === 0 ? (
               <div className="text-center py-4 space-y-2">
                 <p className="text-xs text-gray-600 italic">No models found</p>

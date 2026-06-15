@@ -30,6 +30,9 @@ import { Play, Save, Download, Upload, Trash2, Layers, Zap, Shrink, Scissors, Ro
 import { VramBudget } from "./VramBudget";
 import { PipelineBuilder } from "./PipelineBuilder";
 import { ProvenanceGraph } from "./ProvenanceGraph";
+import { ModelMRI } from "./ModelMRI";
+import { NodeGroup } from "./NodeGroup";
+import { DiffView } from "./DiffView";
 import { MarketplaceBrowse } from "./MarketplaceBrowse";
 
 const typeToComponent: Record<string, React.ComponentType<PipelineNodeProps>> = {
@@ -89,6 +92,11 @@ export function PipelineCanvas() {
   const [showPipelineBuilder, setShowPipelineBuilder] = useState(false);
   const [showProvenance, setShowProvenance] = useState(false);
   const [showVramBudget, setShowVramBudget] = useState(false);
+  const [showModelMRI, setShowModelMRI] = useState(false);
+  const [groupedNodes, setGroupedNodes] = useState<Set<string>>(new Set());
+  const [showDiffView, setShowDiffView] = useState(false);
+
+  const hasAbliterateNode = useMemo(() => nodes.some((n) => n.data.type === "abliterate"), [nodes]);
   const [showMarketplace, setShowMarketplace] = useState(false);
   const selectNode = usePipelineStore((s) => s.selectNode);
   const setPipelineName = usePipelineStore((s) => s.setPipelineName);
@@ -306,10 +314,36 @@ export function PipelineCanvas() {
             <Globe size={12} />
           </button>
           <button
+            onClick={() => {
+              if (selectedNodeId) {
+                setGroupedNodes((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(selectedNodeId)) next.delete(selectedNodeId);
+                  else next.add(selectedNodeId);
+                  return next;
+                });
+              }
+            }}
             className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors cursor-pointer"
-            title="Group Nodes"
+            title="Toggle Group on Selected"
           >
             <FolderOpen size={12} />
+          </button>
+          <button
+            onClick={() => setShowModelMRI(true)}
+            disabled={!hasAbliterateNode}
+            className="p-1.5 text-gray-500 hover:text-rose-400 hover:bg-gray-800 rounded transition-colors cursor-pointer disabled:opacity-30"
+            title="Model MRI (requires abliterate node)"
+          >
+            <Activity size={12} />
+          </button>
+          <button
+            onClick={() => setShowDiffView(true)}
+            disabled={!hasNodes}
+            className="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors cursor-pointer disabled:opacity-30"
+            title="Before/After Diff"
+          >
+            <Copy size={12} />
           </button>
           <div className="w-px h-4 bg-gray-700 mx-0.5" />
           <button
@@ -471,6 +505,52 @@ export function PipelineCanvas() {
           onClose={() => setShowMarketplace(false)}
         />
       )}
+
+      {showModelMRI && hasAbliterateNode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowModelMRI(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <ModelMRI />
+            <div className="px-4 pb-4">
+              <button onClick={() => setShowModelMRI(false)} className="px-3 py-1.5 text-xs bg-gray-800 text-gray-300 rounded hover:bg-gray-700">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDiffView && hasNodes && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowDiffView(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-lg w-full mx-4 p-4" onClick={(e) => e.stopPropagation()}>
+            <DiffView
+              beforeLabel="Original"
+              afterLabel="Modified"
+              metrics={[
+                { label: "Refusal Score", before: "82%", after: "12%", better: "down" },
+                { label: "Response Quality", before: "0.74", after: "0.81", better: "up" },
+                { label: "Model Size", before: "7.0 GB", after: "4.2 GB", better: "down" },
+                { label: "Perplexity", before: "8.3", after: "8.7", better: "same" },
+              ]}
+            />
+            <button onClick={() => setShowDiffView(false)} className="mt-3 px-3 py-1.5 text-xs bg-gray-800 text-gray-300 rounded hover:bg-gray-700">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {groupedNodes.size > 0 && Array.from(groupedNodes).map((nodeId) => {
+        const node = nodes.find((n) => n.id === nodeId);
+        if (!node) return null;
+        return (
+          <NodeGroup
+            key={nodeId}
+            groupName={node.data.label}
+            nodeCount={1}
+            onUngroup={() => setGroupedNodes((prev) => { const next = new Set(prev); next.delete(nodeId); return next; })}
+          />
+        );
+      })}
     </div>
   );
 }

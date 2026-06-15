@@ -4,9 +4,14 @@ import { NodeWrapper } from "./NodeWrapper";
 import { api } from "../../lib/api";
 import { usePipelineStore } from "../../stores";
 import type { AbliterateResult } from "../../types/api";
+import { GridSearchPanel } from "../GridSearchPanel";
+import { ABTestPanel } from "../ABTestPanel";
 
 function AbliterateNodeInner({ id, data }: PipelineNodeProps) {
   const [method, setMethod] = useState("direction_ablation");
+  const [showGridSearch, setShowGridSearch] = useState(false);
+  const [showABTest, setShowABTest] = useState(false);
+  const [abResults, setAbResults] = useState<any[]>([]);
   const updateNodeConfig = usePipelineStore((s) => s.updateNodeConfig);
 
   useEffect(() => {
@@ -31,6 +36,12 @@ function AbliterateNodeInner({ id, data }: PipelineNodeProps) {
     }
   }, [method, data.config]);
 
+  const handleGridResults = useCallback((results: any[]) => {
+    setAbResults(results);
+    setShowGridSearch(false);
+    setShowABTest(true);
+  }, []);
+
   return (
     <NodeWrapper data={data}>
       <div className="space-y-2">
@@ -49,6 +60,12 @@ function AbliterateNodeInner({ id, data }: PipelineNodeProps) {
         >
           {loading ? "Validating..." : "Validate"}
         </button>
+        <button
+          onClick={() => setShowGridSearch(true)}
+          className="w-full px-2 py-1 text-xs font-medium text-gray-100 bg-indigo-600 rounded hover:bg-indigo-500 flex items-center justify-center gap-1"
+        >
+          Auto Grid Search
+        </button>
         {result && (
           <div className="text-xs text-gray-300">
             {result.validation.valid ? (
@@ -62,6 +79,18 @@ function AbliterateNodeInner({ id, data }: PipelineNodeProps) {
           </div>
         )}
       </div>
+
+      {showGridSearch && (
+        <GridSearchPanel onClose={() => setShowGridSearch(false)} onResults={handleGridResults} />
+      )}
+
+      {showABTest && abResults.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowABTest(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-xl max-h-[80vh] overflow-y-auto p-4" onClick={(e) => e.stopPropagation()}>
+            <ABTestPanel results={abResults} onClose={() => setShowABTest(false)} />
+          </div>
+        </div>
+      )}
     </NodeWrapper>
   );
 }

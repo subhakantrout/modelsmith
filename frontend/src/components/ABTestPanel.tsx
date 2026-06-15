@@ -21,6 +21,7 @@ interface ABTestPanelProps {
   autoRun?: boolean;
   configA?: Record<string, unknown>;
   configB?: Record<string, unknown>;
+  onClose?: () => void;
 }
 
 function scoreColor(value: number): string {
@@ -101,6 +102,9 @@ export function ABTestPanel({ results, autoRun, configA, configB }: ABTestPanelP
         <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium flex items-center gap-1.5">
           <GitCompare size={12} />
           A/B Test Scoring
+          {onClose && (
+            <button onClick={onClose} className="ml-auto text-gray-500 hover:text-gray-200">&times;</button>
+          )}
         </div>
         <div className="flex gap-2">
           <input

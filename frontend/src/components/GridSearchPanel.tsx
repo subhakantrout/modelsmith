@@ -21,7 +21,12 @@ interface GridSearchResponse {
   num_layers: number;
 }
 
-export function GridSearchPanel() {
+interface GridSearchPanelProps {
+  onClose?: () => void;
+  onResults?: (results: GridResult[]) => void;
+}
+
+export function GridSearchPanel({ onClose, onResults }: GridSearchPanelProps) {
   const [layerStart, setLayerStart] = useState(5);
   const [layerEnd, setLayerEnd] = useState(25);
   const [layerStep, setLayerStep] = useState(5);
@@ -71,6 +76,18 @@ export function GridSearchPanel() {
       <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium flex items-center gap-1.5">
         <Search size={12} />
         Auto-Abliteration Search
+        {onResults && (
+          <button
+            onClick={() => { if (result) onResults(result.pareto_front); onClose?.(); }}
+            disabled={!result}
+            className="ml-auto text-[10px] text-gray-600 hover:text-gray-400 disabled:opacity-40"
+          >
+            Apply Best
+          </button>
+        )}
+        {onClose && (
+          <button onClick={onClose} className="ml-1 text-gray-500 hover:text-gray-200">&times;</button>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-2">

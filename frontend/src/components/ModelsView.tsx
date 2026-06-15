@@ -3,7 +3,8 @@ import { api } from "../lib/api";
 import type { ModelRegistryItem } from "../types/api";
 import { useDownloadStore } from "../stores";
 import { HubSearch } from "./HubSearch";
-import { Download, HardDrive, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Download, HardDrive, FileText, CheckCircle, AlertCircle, Search } from "lucide-react";
+import { CardSkeleton } from "./Skeleton";
 
 export function ModelsView() {
   const [models, setModels] = useState<ModelRegistryItem[]>([]);
@@ -36,7 +37,9 @@ export function ModelsView() {
         </div>
 
         {loading ? (
-          <div className="text-xs text-gray-500 animate-pulse text-center py-12">Loading models...</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
+          </div>
         ) : models.length === 0 ? (
           <div className="text-center py-12 space-y-3 border border-dashed border-gray-700/40 rounded-xl">
             <HardDrive size={32} className="mx-auto text-gray-700" />
