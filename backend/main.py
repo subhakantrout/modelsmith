@@ -18,6 +18,7 @@ from backend.api.compress import router as compress_router
 from backend.api.project import router as project_router
 from backend.api.advisor import router as advisor_router
 from backend.api.ws import router as ws_router
+from backend.api.activation_stream import router as activation_stream_router
 
 logger = logging.getLogger("modelsmith")
 
@@ -53,6 +54,7 @@ app.include_router(compress_router)
 app.include_router(project_router)
 app.include_router(advisor_router)
 app.include_router(ws_router)
+app.include_router(activation_stream_router)
 
 
 @app.get("/api/health")

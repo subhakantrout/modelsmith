@@ -59,13 +59,6 @@ const typeConfig: Record<string, TypeStyle> = {
   },
 };
 
-const statusColor: Record<string, string> = {
-  running: "text-blue-400",
-  done: "text-green-400",
-  error: "text-red-400",
-  idle: "text-gray-500",
-};
-
 function Handles({ config }: { config: TypeStyle }) {
   try {
     useReactFlow();

@@ -195,3 +195,12 @@ async def hub_download_clear():
     dm = get_download_manager()
     dm.clear_completed()
     return {"status": "cleared"}
+
+
+@router.get("/recommendations")
+async def model_recommendations():
+    from backend.core.llmfit_adapter import get_system_fit
+    report = await get_system_fit()
+    if report is None:
+        return {"status": "unavailable", "message": "LLMFit not installed"}
+    return {"status": "ok", "report": report}

@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 import type { ModelRegistryItem } from "../types/api";
 import { useViewStore } from "../stores/viewStore";
 import { HubSearch } from "./HubSearch";
-import { Box, Cpu, HardDrive, Download, Search, Activity, ArrowRight } from "lucide-react";
+import { Box, Cpu, HardDrive, Download, Activity, ArrowRight } from "lucide-react";
 
 export function HomeView() {
   const nodes = usePipelineStore((s) => s.nodes);

@@ -6,6 +6,7 @@ from backend.core.abliterator import (
     find_refusal_direction, apply_abliteration, remove_abliteration,
     get_abliteration_status, detect_model_family, REFUSAL_LAYERS,
 )
+from backend.core.grid_search import GridSearchRunner, GridConfig
 import asyncio
 
 router = APIRouter(prefix="/api/abliterate", tags=["abliterate"])
@@ -109,4 +110,82 @@ async def validate(req: ValidateRequest):
             "method": req.method,
             "model_size_gb": req.model_size_gb,
         } if not errors else None,
+    }
+
+
+class GridSearchRequest(BaseModel):
+    layer_start: int = 5
+    layer_end: int = 25
+    layer_step: int = 5
+    scale_start: float = 0.5
+    scale_end: float = 1.5
+    scale_step: float = 0.1
+    max_new_tokens: int = 50
+
+
+@router.post("/grid-search")
+async def grid_search(req: GridSearchRequest):
+    mgr = get_manager()
+    if mgr.model is None or mgr.tokenizer is None:
+        raise HTTPException(status_code=400, detail="No model loaded")
+
+    config = GridConfig(
+        layer_start=req.layer_start,
+        layer_end=req.layer_end,
+        layer_step=req.layer_step,
+        scale_start=req.scale_start,
+        scale_end=req.scale_end,
+        scale_step=req.scale_step,
+        max_new_tokens=req.max_new_tokens or 50,
+    )
+
+    runner = GridSearchRunner(mgr.model, mgr.tokenizer, config)
+
+    try:
+        report = await asyncio.to_thread(runner.run)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {
+        "status": "completed",
+        "config": {
+            "layer_start": report.config.layer_start,
+            "layer_end": report.config.layer_end,
+            "layer_step": report.config.layer_step,
+            "scale_start": report.config.scale_start,
+            "scale_end": report.config.scale_end,
+            "scale_step": report.config.scale_step,
+        },
+        "results": [
+            {
+                "layer_idx": r.layer_idx,
+                "scale": r.scale,
+                "refusal_score": round(r.refusal_score, 4),
+                "quality_score": round(r.quality_score, 4),
+                "composite_score": round(r.composite_score, 4),
+                "activation_norms": r.activation_norms,
+                "duration_ms": round(r.duration_ms, 1),
+            }
+            for r in report.results
+        ],
+        "pareto_front": [
+            {
+                "layer_idx": r.layer_idx,
+                "scale": r.scale,
+                "refusal_score": round(r.refusal_score, 4),
+                "quality_score": round(r.quality_score, 4),
+                "composite_score": round(r.composite_score, 4),
+            }
+            for r in report.pareto_front
+        ],
+        "best_overall": {
+            "layer_idx": report.best_overall.layer_idx,
+            "scale": report.best_overall.scale,
+            "refusal_score": round(report.best_overall.refusal_score, 4),
+            "quality_score": round(report.best_overall.quality_score, 4),
+            "composite_score": round(report.best_overall.composite_score, 4),
+        } if report.best_overall else None,
+        "total_duration_ms": round(report.total_duration_ms, 1),
+        "model_family": report.model_family,
+        "num_layers": report.num_layers,
     }

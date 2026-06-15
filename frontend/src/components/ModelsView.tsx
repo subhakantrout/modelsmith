@@ -3,7 +3,7 @@ import { api } from "../lib/api";
 import type { ModelRegistryItem } from "../types/api";
 import { useDownloadStore } from "../stores";
 import { HubSearch } from "./HubSearch";
-import { Download, Search, HardDrive, Cpu, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Download, HardDrive, FileText, CheckCircle, AlertCircle } from "lucide-react";
 
 export function ModelsView() {
   const [models, setModels] = useState<ModelRegistryItem[]>([]);
