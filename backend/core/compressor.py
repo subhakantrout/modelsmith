@@ -3,6 +3,7 @@ import logging
 import shutil
 import torch
 from typing import Optional
+from backend.core.security import validate_subprocess_arg
 
 logger = logging.getLogger("modelsmith.compressor")
 
@@ -106,7 +107,7 @@ def run_quantization(
         }
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     import subprocess
-    cmd = [convert, input_path, output_path, quant_id]
+    cmd = [validate_subprocess_arg(a) for a in [convert, input_path, output_path, quant_id]]
     logger.info(f"Running: {' '.join(cmd)}")
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=7200)

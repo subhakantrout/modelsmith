@@ -26,10 +26,31 @@ import type {
 
 const BASE = "/api";
 
+let _apiKey: string | null = null;
+
+async function getApiKey(): Promise<string> {
+  if (_apiKey) return _apiKey;
+  try {
+    const res = await fetch(`${BASE}/session-key`);
+    const data = await res.json();
+    _apiKey = data.key;
+    return _apiKey!;
+  } catch {
+    return "";
+  }
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const key = _apiKey || (await getApiKey());
+  if (key) headers["X-Api-Key"] = key;
+  if (options?.headers) {
+    Object.assign(headers, options.headers as Record<string, string>);
+  }
+
   const res = await fetch(`${BASE}${url}`, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers,
   });
   if (!res.ok) {
     const body = await res.text();
@@ -259,11 +280,15 @@ export const api = {
   hub: {
     search: (query: string, limit = 20) =>
       request<{ results: any[] }>(`/models/hub-search?query=${encodeURIComponent(query)}&limit=${limit}`),
-    download: (modelId: string, token?: string, outputDir?: string) =>
-      request<{ download_id: string; status: string }>("/models/hub-download", {
+    download: (modelId: string, token?: string, outputDir?: string) => {
+      const headers: Record<string, string> = {};
+      if (token) headers["X-HF-Token"] = token;
+      return request<{ download_id: string; status: string }>("/models/hub-download", {
         method: "POST",
-        body: JSON.stringify({ model_id: modelId, token: token || "", output_dir: outputDir || "" }),
-      }),
+        headers,
+        body: JSON.stringify({ model_id: modelId, output_dir: outputDir || "" }),
+      });
+    },
     downloadStatus: (downloadId: string) =>
       request<DownloadStatus>(`/models/hub-download-status/${downloadId}`),
     downloads: () =>

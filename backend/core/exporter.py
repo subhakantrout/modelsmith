@@ -6,6 +6,7 @@ import tempfile
 import subprocess
 from typing import Optional
 from backend.core.model_manager import get_manager
+from backend.core.security import validate_subprocess_arg
 
 logger = logging.getLogger("modelsmith.exporter")
 
@@ -106,11 +107,11 @@ def export_to_gguf(output_dir: str, quant: str = "q4_k_m") -> dict:
 
         try:
             cmd = [
-                "python3" if shutil.which("python3") else "python",
-                convert_script,
-                safetensors_dir,
-                "--outfile", gguf_path,
-                "--outtype", quant,
+                validate_subprocess_arg("python3" if shutil.which("python3") else "python"),
+                validate_subprocess_arg(convert_script),
+                validate_subprocess_arg(safetensors_dir),
+                "--outfile", validate_subprocess_arg(gguf_path),
+                "--outtype", validate_subprocess_arg(quant),
             ]
             logger.info(f"Running: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)

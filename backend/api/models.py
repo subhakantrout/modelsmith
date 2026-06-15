@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional
 from backend.core.model_manager import get_manager
@@ -115,11 +115,13 @@ async def hub_search(query: str, limit: int = 20):
 class HubDownloadRequest(BaseModel):
     model_id: str
     output_dir: str = ""
-    token: Optional[str] = None
 
 
 @router.post("/hub-download")
-async def hub_download(req: HubDownloadRequest):
+async def hub_download(
+    req: HubDownloadRequest,
+    x_hf_token: Optional[str] = Header(None),
+):
     from backend.core.model_registry import get_download_manager
     from backend.core.security import resolve_model_path
     try:
@@ -127,7 +129,7 @@ async def hub_download(req: HubDownloadRequest):
         if output_dir:
             output_dir = resolve_model_path(output_dir)
         dm = get_download_manager()
-        download_id = dm.start(req.model_id, output_dir, req.token)
+        download_id = dm.start(req.model_id, output_dir, x_hf_token)
         return {"download_id": download_id, "status": "started"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

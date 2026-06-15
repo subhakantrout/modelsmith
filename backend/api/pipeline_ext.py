@@ -1,7 +1,9 @@
 import os
+import re
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from backend.core.security import resolve_model_path, sanitize_model_path
 
 router = APIRouter(prefix="/api/pipeline", tags=["pipeline_ext"])
 
@@ -15,10 +17,10 @@ app = FastAPI(title="ModelSmith Exported Model")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 MODEL_PATH = {model_path!r}
@@ -129,11 +131,12 @@ class ExportApiRequest(BaseModel):
 
 @router.post("/export-api")
 async def export_api(req: ExportApiRequest):
-    output_dir = Path(req.output_dir).resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    serve_path = output_dir / "serve.py"
+    safe_path = sanitize_model_path(req.model_path)
+    output_dir = resolve_model_path(str(Path(req.output_dir).resolve()))
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    serve_path = Path(output_dir) / "serve.py"
     content = SERVE_PY_TEMPLATE.format(
-        model_path=req.model_path,
+        model_path=safe_path,
         steps=req.steps,
     )
     serve_path.write_text(content)

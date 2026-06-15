@@ -1,9 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import os
 from backend.api.system import router as system_router
 from backend.api.models import router as models_router
@@ -25,25 +26,54 @@ from backend.api.pipeline_ext import router as pipeline_ext_router
 from backend.api.marketplace import router as marketplace_router
 from backend.api.ab_test import router as ab_test_router
 from backend.api.node_group import router as node_group_router
+from backend.core.security import get_api_key, validate_api_key
 
 logger = logging.getLogger("modelsmith")
+
+PUBLIC_PATHS = {"/api/health", "/api/session-key", "/docs", "/openapi.json"}
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("ModelSmith backend starting...")
+    api_key = get_api_key()
+    logger.info(f"ModelSmith backend starting... (API key: {api_key[:8]}...)")
     yield
     logger.info("ModelSmith backend shutting down...")
 
 
 app = FastAPI(title="ModelSmith", version="1.0.0", lifespan=lifespan)
 
+
+@app.middleware("http")
+async def api_key_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    path = request.url.path
+    if path in PUBLIC_PATHS or path.startswith("/api/ws") or path.startswith("/assets"):
+        return await call_next(request)
+
+    key = request.headers.get("X-Api-Key", "")
+    if not validate_api_key(key):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Missing or invalid API key. Set X-Api-Key header."},
+        )
+
+    return await call_next(request)
+
+
+@app.get("/api/session-key")
+async def session_key():
+    return {"key": get_api_key()}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:8765"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "X-Api-Key", "X-HF-Token"],
 )
 
 
@@ -88,4 +118,4 @@ if os.path.isdir(frontend_dist):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8765, reload=True)
+    uvicorn.run("backend.main:app", host="127.0.0.1", port=8765, reload=True)
