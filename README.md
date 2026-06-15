@@ -2,8 +2,6 @@
 
 <img src="frontend/public/logo-horizontal.svg" alt="ModelSmith" width="400">
 
-**Forge Your Perfect Model**
-
 [![Python](https://img.shields.io/badge/python-3.13-blue?logo=python&logoColor=white)](https://python.org)
 [![TypeScript](https://img.shields.io/badge/typescript-6.0-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -14,36 +12,36 @@
 
 **A visual node-based pipeline studio for local AI models — uncensor, merge, enhance, and compress without writing code.**
 
-[Why ModelSmith](#-why-modelsmith) • [Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Security](#-security) • [API Overview](#-api-overview) • [Contributing](#-contributing) • [License](#-license)
+[Why ModelSmith](#why-modelsmith) • [Features](#features) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Security](#security) • [API Overview](#api-overview) • [Contributing](#contributing) • [License](#license)
 
 </div>
 
 ---
 
-## 🌟 Why ModelSmith?
+## Why ModelSmith?
 
-Local AI is powerful, but it's trapped behind three walls:
+Local AI is powerful, but it is trapped behind three walls:
 
 | Wall | Problem | ModelSmith Solution |
 |------|---------|-------------------|
-| ❄️ **Censorship** | Models refuse legitimate requests even after you download them | **One-click abliteration** — surgically removes refusal directions from any LLM |
-| 🧩 **Capability Gaps** | No single model excels at everything | **Visual merging & LoRA** — combine strengths of multiple models with drag-and-drop |
-| ⚡ **Hardware Mismatch** | Powerful models won't run on consumer hardware | **Smart compression** — auto-selects quantization level for your specific RAM/VRAM |
+| **Censorship** | Models refuse legitimate requests even after you download them | **One-click abliteration** — surgically removes refusal directions from any LLM |
+| **Capability Gaps** | No single model excels at everything | **Visual merging and LoRA** — combine strengths of multiple models with drag-and-drop |
+| **Hardware Mismatch** | Powerful models will not run on consumer hardware | **Smart compression** — auto-selects quantization level for your specific RAM and VRAM |
 
-**ModelSmith replaces hours of command-line fiddling with a visual pipeline canvas.** No Python scripts, no terminal incantations — just connect nodes and run.
+**ModelSmith replaces hours of manual command-line work with a visual pipeline canvas.** No Python scripts, no terminal commands — just connect nodes and run.
 
 ---
 
-## 🔥 Features
+## Features
 
 ### Core Pipeline
 
-| Node | What It Does | Powered By |
+| Node | What It Does | Backend |
 |------|-------------|------------|
 | **📥 Load Model** | Load any HuggingFace model with tier-appropriate quantization (NF4, FP16, BF16) | transformers + bitsandbytes |
 | **🔬 Analyze** | Detect refusal patterns, score outputs, map layer-by-layer refusal direction | Custom refusal classifier |
-| **✂️ Abliterate** | Remove censorship via directional ablation — find and subtract refusal vectors | Heretic/Abliterix technique |
-| **🔍 Auto Grid Search** | Brute-force optimal abliteration parameters across 20+ layer/config combinations | smart pruning + parallel sweep |
+| **✂️ Abliterate** | Remove censorship via directional ablation — find and subtract refusal vectors | Abliteration via directional ablation |
+| **🔍 Auto Grid Search** | Systematic search for optimal abliteration parameters across 20+ layer/config combinations | Smart pruning + parallel sweep |
 | **🧪 A/B Testing** | Side-by-side scoring of original vs abliterated responses (refusal + quality) | Auto-scoring engine |
 | **🧩 Merge** | Combine models using advanced algorithms | mergekit (TIES, SLERP, DARE, Linear) |
 | **🎛️ LoRA** | Inject or extract LoRA adapters to add/remove specific skills | PEFT |
@@ -52,7 +50,7 @@ Local AI is powerful, but it's trapped behind three walls:
 
 ### Intelligence Layer
 
-- **🧠 Pipeline Advisor** — Describe your goal in natural language ("uncensor a 7B model for RP with low VRAM") and ModelSmith builds the optimal DAG with typed configs and connections.
+- **🧠 Pipeline Advisor** — Describe your goal in natural language ("uncensor a 7B model with low VRAM") and ModelSmith builds the optimal DAG with typed configs and connections.
 - **🔄 Conversational Pipeline Builder** — Type a goal in plain English and get a ready-to-run pipeline blueprint — no manual node dragging.
 - **📊 Home View** — System overview with hardware specs, local model browser, quick-action cards for every tool, and pipeline status.
 - **⬇️ Download Manager** — Queue, pause, resume, cancel downloads from HuggingFace Hub — with real-time progress bars, speed, ETA, concurrent queue (max 3), and retry.
@@ -95,7 +93,7 @@ Every operation runs a **pre-flight check** against your available RAM. If it wo
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -141,7 +139,7 @@ Open **http://localhost:5173** 🎉
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ### Stack
 
@@ -207,7 +205,7 @@ modelsmith/
 
 ---
 
-## 🔒 Security
+## Security
 
 See [`docs/SECURITY.md`](docs/SECURITY.md) for the full security guide.
 
@@ -223,7 +221,7 @@ See [`docs/SECURITY.md`](docs/SECURITY.md) for the full security guide.
 
 ---
 
-## 📖 API Overview
+## API Overview
 
 ### Core Model Operations
 | Method | Endpoint | Purpose |
@@ -277,7 +275,7 @@ See [`docs/SECURITY.md`](docs/SECURITY.md) for the full security guide.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 ### Development Setup
 
@@ -327,7 +325,7 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 
 ---
 
-## 📊 Project in Numbers
+## Project in Numbers
 
 | Metric | Value |
 |--------|-------|
@@ -342,7 +340,7 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 
 ---
 
-## ⚠️ Known Limitations
+## Known Limitations
 
 | Limitation | Mitigation |
 |------------|-----------|
@@ -354,7 +352,7 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
@@ -364,7 +362,7 @@ Copyright © 2026 **Subhakanta Rout**
 
 <div align="center">
 
-**⭐ Star this repo if you find it useful!**
+**Star this repo if you find it useful!**
 
 [Report Bug](https://github.com/subhakantrout/modelsmith/issues) • [Request Feature](https://github.com/subhakantrout/modelsmith/issues)
 
