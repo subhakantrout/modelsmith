@@ -39,7 +39,7 @@ function ExportNodeInner({ id, data }: PipelineNodeProps) {
   }, [format, outputDir, data.config]);
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} nodeId={id}>
       <div className="space-y-2">
         <input
           type="text"

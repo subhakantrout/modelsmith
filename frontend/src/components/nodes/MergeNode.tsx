@@ -38,7 +38,7 @@ function MergeNodeInner({ id, data }: PipelineNodeProps) {
   }, [method, modelPath1, modelPath2]);
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} nodeId={id}>
       <div className="space-y-2">
         <select
           value={method}

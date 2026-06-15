@@ -20,7 +20,7 @@ function AnalyzeNodeInner({ id, data }: PipelineNodeProps) {
   }, [testOutput, analyzeRefusal]);
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} nodeId={id}>
       <div className="space-y-2">
         <textarea
           value={testOutput}

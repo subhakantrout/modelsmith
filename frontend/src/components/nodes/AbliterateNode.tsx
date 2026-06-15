@@ -43,7 +43,7 @@ function AbliterateNodeInner({ id, data }: PipelineNodeProps) {
   }, []);
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} nodeId={id}>
       <div className="space-y-2">
         <select
           value={method}

@@ -80,7 +80,7 @@ function CompressNodeInner({ id, data }: PipelineNodeProps) {
   }, [quant, prune, kv, sparsify, addToast]);
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} nodeId={id}>
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Gauge size={13} className="text-orange-400" />

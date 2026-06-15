@@ -1,15 +1,17 @@
 import { memo, type ReactNode } from "react";
 import { Handle, Position, useReactFlow } from "@xyflow/react";
 import type { PipelineNodeData } from "../../stores";
+import { usePipelineStore } from "../../stores";
 import { 
   Box, Scissors, Combine, Layers, 
   Download, FileArchive, Activity,
-  Loader2, AlertCircle, CheckCircle2, Circle
+  Loader2, AlertCircle, CheckCircle2, Circle, X
 } from "lucide-react";
 
 interface NodeWrapperProps {
   data: PipelineNodeData;
   children: ReactNode;
+  nodeId?: string;
 }
 
 interface TypeStyle {
@@ -94,7 +96,7 @@ function StatusIcon({ status }: { status: string }) {
   }
 }
 
-function NodeWrapperInner({ data, children }: NodeWrapperProps) {
+function NodeWrapperInner({ data, children, nodeId }: NodeWrapperProps) {
   const config = typeConfig[data.type] || {
     ...typeConfig.modelInput,
     color: "text-gray-400", bg: "bg-gray-800 border-gray-600",
@@ -102,6 +104,8 @@ function NodeWrapperInner({ data, children }: NodeWrapperProps) {
   };
   const Icon = config.icon;
   const isRunning = data.status === "running";
+  const removeNode = usePipelineStore((s) => s.removeNode);
+  const handleDelete = () => { if (nodeId) removeNode(nodeId); };
 
   return (
     <div
@@ -122,6 +126,15 @@ function NodeWrapperInner({ data, children }: NodeWrapperProps) {
         </div>
         <div className="flex items-center gap-1.5">
           <StatusIcon status={data.status} />
+          {nodeId && !isRunning && (
+            <button
+              onClick={handleDelete}
+              className="p-0.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-900/30 transition-colors"
+              title="Delete node"
+            >
+              <X size={12} />
+            </button>
+          )}
         </div>
       </div>
 

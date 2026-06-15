@@ -27,7 +27,7 @@ function ModelInputNodeInner({ id, data }: PipelineNodeProps) {
   }, [setModelPath]);
 
   return (
-    <NodeWrapper data={data}>
+    <NodeWrapper data={data} nodeId={id}>
       <div className="space-y-2">
         <div className="flex gap-1">
           <input

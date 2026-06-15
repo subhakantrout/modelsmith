@@ -8,7 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/typescript-6.0-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
-[![Tests](https://img.shields.io/badge/tests-143_passing-success?logo=pytest)](https://github.com/subhakantrout/modelsmith)
+[![Tests](https://img.shields.io/badge/tests-174_passing-success?logo=pytest)](https://github.com/subhakantrout/modelsmith)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/subhakantrout/modelsmith/blob/master/LICENSE)
 [![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/subhakantrout/modelsmith/pulls)
 
@@ -27,8 +27,8 @@ Local AI is powerful, but it's trapped behind three walls:
 | Wall | Problem | ModelSmith Solution |
 |------|---------|-------------------|
 | ❄️ **Censorship** | Models refuse legitimate requests even after you download them | **One-click abliteration** — surgically removes refusal directions from any LLM |
-| **🧩 Capability Gaps** | No single model excels at everything | **Visual merging & LoRA** — combine strengths of multiple models with drag-and-drop |
-| **⚡ Hardware Mismatch** | Powerful models won't run on consumer hardware | **Smart compression** — auto-selects quantization level for your specific RAM/VRAM |
+| 🧩 **Capability Gaps** | No single model excels at everything | **Visual merging & LoRA** — combine strengths of multiple models with drag-and-drop |
+| ⚡ **Hardware Mismatch** | Powerful models won't run on consumer hardware | **Smart compression** — auto-selects quantization level for your specific RAM/VRAM |
 
 **ModelSmith replaces hours of command-line fiddling with a visual pipeline canvas.** No Python scripts, no terminal incantations — just connect nodes and run.
 
@@ -43,20 +43,41 @@ Local AI is powerful, but it's trapped behind three walls:
 | **📥 Load Model** | Load any HuggingFace model with tier-appropriate quantization (NF4, FP16, BF16) | transformers + bitsandbytes |
 | **🔬 Analyze** | Detect refusal patterns, score outputs, map layer-by-layer refusal direction | Custom refusal classifier |
 | **✂️ Abliterate** | Remove censorship via directional ablation — find and subtract refusal vectors | Heretic/Abliterix technique |
+| **🔍 Auto Grid Search** | Brute-force optimal abliteration parameters across 20+ layer/config combinations | smart pruning + parallel sweep |
+| **🧪 A/B Testing** | Side-by-side scoring of original vs abliterated responses (refusal + quality) | Auto-scoring engine |
 | **🧩 Merge** | Combine models using advanced algorithms | mergekit (TIES, SLERP, DARE, Linear) |
 | **🎛️ LoRA** | Inject or extract LoRA adapters to add/remove specific skills | PEFT |
 | **📦 Compress** | Shrink models via GGUF quantization, layer pruning, KV cache compression, sparsification | llama.cpp + custom |
-| **💬 Test Chat** | Side-by-side comparison of original vs edited model | Real inference |
+| **💾 Export** | Export modified model to safetensors, GGUF, or deployable API | Deployable API generator |
 
 ### Intelligence Layer
 
-- **🧠 Pipeline Advisor** — AI analyzes your hardware and recommends the optimal pipeline. Just describe your goal and ModelSmith builds the workflow.
+- **🧠 Pipeline Advisor** — Describe your goal in natural language ("uncensor a 7B model for RP with low VRAM") and ModelSmith builds the optimal DAG with typed configs and connections.
+- **🔄 Conversational Pipeline Builder** — Type a goal in plain English and get a ready-to-run pipeline blueprint — no manual node dragging.
 - **📊 Home View** — System overview with hardware specs, local model browser, quick-action cards for every tool, and pipeline status.
-- **⬇️ Download Manager** — Queue, pause, resume, cancel downloads from HuggingFace Hub directly inside the app — with real-time progress bars, speed, ETA, and retry for failed downloads.
+- **⬇️ Download Manager** — Queue, pause, resume, cancel downloads from HuggingFace Hub — with real-time progress bars, speed, ETA, concurrent queue (max 3), and retry.
 - **🔍 HuggingFace Hub Integration** — Search the Hub from inside ModelSmith, browse results with download counts and tags, download any model with one click.
 - **💾 Project System** — Save/restore pipelines as JSON projects, export/import recipes, resume from checkpoints.
-- **🎨 VS Code-style Layout** — Persistent sidebar navigation, context-sensitive right panel for node configuration, full-page Chat and Settings views.
+- **🎨 VS Code-style Layout** — Collapsible sidebar navigation, context-sensitive right panel, full-page Chat and Settings views.
 - **🌓 Dark/Light Theme** — Toggle between dark and light mode via the header bar or Settings view.
+
+### Novel Capabilities
+
+| Feature | What It Does |
+|---------|-------------|
+| **🧠 Model MRI** | Visualize layer-by-layer refusal direction activity — color-coded heatmap of which layers are most censored |
+| **💾 VRAM Budget** | Real-time RAM/VRAM consumption gauge per node — color-coded bars with per-model estimates |
+| **📜 Provenance Graph** | Full audit trail of every abliteration/merge/compress — timeline with collapsible step details |
+| **🌐 Pipeline Marketplace** | Download community pipelines as ready-made blueprint JSON files — apply to canvas instantly |
+| **🚀 Deployable API** | Export any pipeline as a standalone `serve.py` with an OpenAI-compatible `/v1/chat/completions` endpoint |
+| **🔍 Before/After Diff** | Side-by-side comparison of refusal scores, response quality, model size, perplexity |
+| **📦 Node Grouping** | Collapse related nodes into groups for cleaner canvas organization |
+| **↩️ Undo/Redo** | Full history stack (50 entries), Ctrl+Z / Ctrl+Shift+Z, toolbar buttons |
+| **🎯 Drag-and-Drop** | Drag nodes from the palette onto the canvas at exact positions |
+| **⌨️ Keyboard Shortcuts** | Delete (remove node), Ctrl+D (duplicate), Ctrl+A (select first), Ctrl+S (save) |
+| **🔗 Edge Labels** | Auto-generated labels on connections showing "Source → Target" |
+| **💬 Better Markdown** | Bold, italic, code, headers, lists, blockquotes, horizontal rules in chat output |
+| **⏳ Loading Skeletons** | 6 skeleton variants (Card, Table, Node, View, List, default) for smooth loading states |
 
 ### Hardware Awareness
 
@@ -136,14 +157,14 @@ Open **http://localhost:5173** 🎉
 ```
 modelsmith/
 ├── backend/
-│   ├── api/          — FastAPI route modules (models, analyze, abliterate, merge, lora, compress, export, chat, system, advisor, projects)
+│   ├── api/          — FastAPI route modules (20+ routers including advisor_ext, provenance, marketplace, pipeline_ext, ab_test, node_group)
 │   ├── core/         — Business logic (model_registry, model_loader, model_manager, model_merger, compressor, system, analyzer, executor)
-│   └── tests/        — pytest test suite (143 tests)
+│   └── tests/        — pytest test suite (174 tests)
 ├── frontend/
 │   ├── src/
-│   │   ├── components/ — React components (Shell, Sidebar, PipelineCanvas, nodes/, 5 views, etc.)
+│   │   ├── components/ — React components (Shell, Sidebar, TopBar, BottomBar, RightPanel, 6 views, PipelineCanvas, 30+ components)
 │   │   ├── stores/     — Zustand stores (pipeline, model, system, chat, download, view, settings)
-│   │   ├── lib/api.ts  — Typed API client for all endpoints
+│   │   ├── lib/api.ts  — Typed API client for all 40+ endpoints
 │   │   └── types/      — TypeScript interfaces
 │   └── package.json
 ├── models/            — Downloaded models (gitignored)
@@ -154,15 +175,15 @@ modelsmith/
 
 ### UI Architecture
 
-- **Shell layout**: VS Code-style with 52px sidebar, top bar, bottom status bar, 290px right panel
-- **5 views**: Home (system overview + quick actions), Canvas (ReactFlow pipeline), Models (local model browser), Chat (full-page), Settings (HF token, theme, about)
+- **Shell layout**: VS Code-style with collapsible 52px sidebar, top bar, bottom status bar, 290px right panel
+- **6 views**: Home (system + quick actions), Canvas (ReactFlow pipeline), Models (local model browser), Chat (full-page), Settings (HF token, theme, about), Download Manager (persistent bottom panel)
 - **No react-router**: state-based view switching via `useViewStore`
 - **RightPanel**: context-sensitive — editable node configuration when a node is selected on Canvas
 
 ### Pipeline Execution Model
 
 1. **7 node types**: ModelInput, Analyze, Abliterate, Merge, LoRA, Compress, Export
-2. Each node has typed config synced to a Zustand store; `pipelineRunner.ts` reads configs and calls backend APIs sequentially
+2. Each node has typed config synced to a Zustand store; `pipelineRunner.ts` reads configs and calls `POST /api/pipeline/run` (unified executor — no switch statement)
 3. Nodes connect via edges forming a **DAG** — the runner topologically sorts and executes in order
 4. **Automatic fallback**: if a node fails, the Pipeline Advisor suggests alternatives
 5. Per-node status tracking: `idle → running → done | error` with visual feedback
@@ -178,20 +199,20 @@ modelsmith/
 - **Zustand stores**: All stores in `stores/`, exported from `stores/index.ts`
 - **API client**: All methods in `lib/api.ts`, typed with `request<T>()`
 - **Types**: Shared interfaces in `types/api.ts`
-- **NodeWrapper**: wraps all pipeline nodes. `useReactFlow()` is try/caught to prevent crash when rendered outside ReactFlow tree (e.g., right panel)
+- **NodeWrapper**: wraps all pipeline nodes. `useReactFlow()` is try/caught to prevent crash when rendered outside ReactFlow tree (e.g., right panel). Includes inline Delete button and per-node status icon.
 - **Download path**: defaults to `<project-root>/models/<model-name>/`
 
 ---
 
 ## 📖 API Overview
 
+### Core Model Operations
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | `GET` | `/api/health` | 🩺 Health check |
 | `GET` | `/api/system/specs` | 💻 Hardware detection + tier |
 | `GET` | `/api/system/resources` | 📊 Live RAM/CPU/GPU |
 | `GET` | `/api/models/registry` | 📋 List all local models |
-| `GET` | `/api/models/summary` | 📊 Loaded model + hardware summary |
 | `POST` | `/api/models/load` | 📥 Load any HF model |
 | `GET` | `/api/models/loaded` | 📋 Current model status |
 | `POST` | `/api/models/unload` | 🔌 Unload current model |
@@ -206,14 +227,34 @@ modelsmith/
 | `POST` | `/api/models/hub-download-cancel/{id}` | ⛔ Cancel download |
 | `POST` | `/api/models/hub-download-retry/{id}` | 🔄 Retry failed download |
 | `POST` | `/api/models/hub-download-clear` | 🧹 Clear completed/failed |
+
+### Pipeline & Analysis
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `POST` | `/api/pipeline/run` | ⚡ Unified pipeline execution |
+| `POST` | `/api/pipeline/export-api` | 🚀 Generate deployable serve.py |
+| `POST` | `/api/pipeline/group` | 📦 Validate node group structure |
 | `POST` | `/api/analyze/refusal` | 🔬 Refusal score for text |
 | `POST` | `/api/abliterate/find-direction` | 🧭 Find refusal vector |
 | `POST` | `/api/abliterate/apply` | ✂️ Apply ablation |
 | `POST` | `/api/merge/run` | 🧩 Execute model merge |
 | `POST` | `/api/lora/apply` | 🎛️ Apply LoRA adapter |
-| `POST` | `/api/compress/quant-estimate` | 📦 Estimate compression |
+| `POST` | `/api/compress/run` | 📦 Execute compression |
+| `POST` | `/api/compress/quant-estimate` | 📊 Estimate compression |
 | `POST` | `/api/export/run` | 💾 Export model |
+
+### Advanced Features
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
 | `GET` | `/api/advisor/recommend` | 🧠 Get pipeline recommendation |
+| `POST` | `/api/advisor/generate-pipeline` | 💬 NLP → pipeline DAG blueprint |
+| `POST` | `/api/ab-test/score` | 🧪 Score responses (refusal + quality) |
+| `GET` | `/api/provenance/history` | 📜 Full provenance audit trail |
+| `GET` | `/api/provenance/graph` | 🔗 Provenance relationship graph |
+| `POST` | `/api/provenance/record` | 📝 Append provenance record |
+| `GET` | `/api/marketplace/list` | 🌐 List community pipelines |
+| `POST` | `/api/marketplace/publish` | 📤 Publish pipeline to marketplace |
+| `POST` | `/api/marketplace/download` | 📥 Download community pipeline |
 
 ---
 
@@ -232,7 +273,7 @@ ruff check backend/
 cd frontend && npx tsc --noEmit
 
 # Run tests
-python -m pytest backend/tests/ -v      # All 143 tests
+python -m pytest backend/tests/ -v      # All 174 tests
 python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 ```
 
@@ -259,9 +300,19 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 
 ```bash
 source .venv/bin/activate
-python -m pytest backend/tests/ -v             # All 143 tests
+python -m pytest backend/tests/ -v             # All 174 tests
 python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 ```
+
+Test coverage includes 31 API endpoint tests across 5 dedicated test files:
+
+| Test File | Tests | Covers |
+|-----------|-------|--------|
+| `test_api_compress.py` | 12 | All compress endpoints |
+| `test_api_pipeline.py` | 5 | Pipeline run + node types |
+| `test_api_gridsearch.py` | 4 | Grid search endpoint |
+| `test_api_provenance.py` | 4 | Provenance CRUD endpoints |
+| `test_api_advisor_ext.py` | 6 | Pipeline generator NLP |
 
 ---
 
@@ -269,14 +320,14 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 
 | Metric | Value |
 |--------|-------|
-| **Backend tests** | 143 passing (100%) |
+| **Backend tests** | 174 passing (100%) |
 | **Frontend type coverage** | Strict TypeScript, zero errors |
 | **API endpoints** | 40+ RESTful routes |
 | **Pipeline nodes** | 7 types (Load, Analyze, Abliterate, Merge, LoRA, Compress, Export) |
-| **Frontend components** | 25+ React components |
-| **State stores** | 8 Zustand stores |
-| **App views** | 5 (Home, Canvas, Models, Chat, Settings) |
-| **Bundle size** | 476 KB (gzip: 143 KB) |
+| **Frontend components** | 30+ React components |
+| **State stores** | 7 Zustand stores |
+| **App views** | 6 (Home, Canvas, Models, Chat, Settings, Download Manager) |
+| **Bundle size** | 525 KB (gzip: 152 KB) |
 
 ---
 
@@ -284,38 +335,11 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term  # With coverage
 
 | Limitation | Mitigation |
 |------------|-----------|
-| Abliteration may degrade quality on some architectures | Always test with the built-in Chat panel before/after |
+| Abliteration may degrade quality on some architectures | Always test with A/B comparison panel before/after |
 | Merging models with different tokenizers can produce broken output | Use models from the same architecture family |
 | Extreme compression (< Q3) causes quality loss | ModelSmith warns you and suggests the sweet spot |
-| Vision models not yet supported | Planned for v1.0 |
+| Vision models not yet supported | Planned |
 | GGUF conversion requires llama.cpp binaries | Install separately or use safetensors export |
-
----
-
-## 🛣 Roadmap
-
-### v0.2 — Near Term
-- [x] Model Hub integration (browse, search, download with queue/progress)
-- [x] Download queue with pause/resume/cancel
-- [x] WebSocket streaming for inference and progress
-- [x] Dark/light theme toggle
-- [x] UI redesign with sidebar navigation and dedicated views
-- [x] Canvas redesign (node palette, per-type glow, editable right panel, presets)
-- [ ] Tauri desktop wrapper (native app)
-- [ ] More merge methods (dare_ties, task_arithmetic)
-
-### v1.0 — Stable Release
-- [ ] Single `pip install modelsmith` command
-- [ ] Native installers (.exe, .dmg, .AppImage)
-- [ ] Vision model support (VLM abliteration)
-- [ ] Plugin system for third-party nodes
-- [ ] Inference server (OpenAI-compatible API)
-
-### v2.0 — Advanced
-- [ ] RLHF / DPO training nodes
-- [ ] Multi-GPU support
-- [ ] Batch processing (multiple models, same pipeline)
-- [ ] Community Hub for sharing pipelines
 
 ---
 
